@@ -135,8 +135,6 @@ export default function AuthModal() {
           </button>
         </form>
         <div className="auth-hint">
-          <span>Akun admin demo:</span>
-          <code>admin@syakilla.id / admin123</code>
         </div>
       </div>
     </div>
