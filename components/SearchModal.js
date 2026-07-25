@@ -2,15 +2,16 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useUI } from "@/context/UIContext";
 import { useStore } from "@/context/StoreContext";
-import SITE from "@/lib/data";
+import { useProducts } from "@/context/ProductsContext";
 import { money } from "@/lib/format";
 import Photo from "./Photo";
-import { productPhoto } from "@/lib/photos";
+import { productImage } from "@/lib/productImage";
 import { Icon } from "./Icons";
 
 export default function SearchModal() {
   const { searchOpen, closeSearch } = useUI();
   const { add } = useStore();
+  const { products } = useProducts();
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
 
@@ -22,7 +23,7 @@ export default function SearchModal() {
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return [];
-    return SITE.products
+    return products
       .filter(
         (p) =>
           p.name.toLowerCase().includes(s) ||
@@ -30,7 +31,7 @@ export default function SearchModal() {
           (p.desc || "").toLowerCase().includes(s),
       )
       .slice(0, 8);
-  }, [q]);
+  }, [q, products]);
 
   if (!searchOpen) return null;
 
@@ -69,11 +70,7 @@ export default function SearchModal() {
                 }}
               >
                 <span className="search-thumb">
-                  <Photo
-                    src={productPhoto(p.id)}
-                    alt={p.name}
-                    fallback={p.img}
-                  />
+                  <Photo src={productImage(p)} alt={p.name} fallback={p.img} />
                 </span>
                 <span className="search-meta">
                   <strong>{p.name}</strong>

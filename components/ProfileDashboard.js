@@ -13,6 +13,7 @@ import {
 import { getReviewCountByEmail } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { Icon } from "./Icons";
+import KelolaProduk from "./KelolaProduk";
 
 const METHOD_LABEL = {
   transfer: "Transfer Bank",
@@ -114,8 +115,8 @@ export default function ProfileDashboard() {
   // Nav "Pesanan Masuk" cuma buat admin. Kalau pembeli (dashboardSection bisa
   // ke-set "masuk" secara tidak sengaja dari state lama), fallback ke dashboard.
   const section = isAdmin
-    ? dashboardSection === "masuk"
-      ? "masuk"
+    ? ["masuk", "produk"].includes(dashboardSection)
+      ? dashboardSection
       : "dashboard"
     : dashboardSection || "dashboard";
   const go = (s) => setDashboardSection(s);
@@ -202,6 +203,14 @@ export default function ProfileDashboard() {
             <button onClick={openProfile}>
               <Icon name="edit" /> Pengaturan Akun
             </button>
+            {isAdmin ? (
+              <button
+                className={section === "produk" ? "on" : ""}
+                onClick={() => go("produk")}
+              >
+                <Icon name="store" /> Kelola Produk
+              </button>
+            ) : null}
             <button
               className="dash-logout"
               onClick={() => {
@@ -215,6 +224,7 @@ export default function ProfileDashboard() {
         </aside>
 
         <div className="dash-main">
+          {section === "produk" && isAdmin ? <KelolaProduk /> : null}
           {section === "dashboard" ? (
             <>
               <h3 className="serif">Dashboard</h3>
@@ -402,8 +412,7 @@ export default function ProfileDashboard() {
                   <span className="ico">
                     <Icon name="inbox" />
                   </span>
-                  Belum ada pesanan masuk. Pesanan baru muncul otomatis di
-                  sini.
+                  Belum ada pesanan masuk. Pesanan baru muncul otomatis di sini.
                 </div>
               ) : (
                 <div className="tx-list">

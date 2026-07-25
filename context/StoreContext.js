@@ -6,16 +6,17 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import SITE from "@/lib/data";
 import { useUI } from "./UIContext";
+import { useProducts } from "./ProductsContext";
 
 const StoreCtx = createContext(null);
 
 export function StoreProvider({ children }) {
   const { showToast, openCart } = useUI();
+  const { products } = useProducts();
   const [cart, setCart] = useState({});
 
-  const P = useCallback((id) => SITE.products.find((p) => p.id === id), []);
+  const P = useCallback((id) => products.find((p) => p.id === id), [products]);
 
   const add = useCallback(
     (id) => {

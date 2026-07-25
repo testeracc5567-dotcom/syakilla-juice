@@ -5,7 +5,7 @@ import { useStore } from "@/context/StoreContext";
 import { useUI } from "@/context/UIContext";
 import { money } from "@/lib/format";
 import { getRating } from "@/lib/reviews";
-import { productPhoto } from "@/lib/photos";
+import { productImage } from "@/lib/productImage";
 
 export default function ProductCard({ product: p }) {
   const { add } = useStore();
@@ -44,7 +44,7 @@ export default function ProductCard({ product: p }) {
       <div className="card-media">
         {p.tag ? <span className="tag">{p.tag}</span> : null}
         <Photo
-          src={productPhoto(p.id)}
+          src={productImage(p)}
           alt={p.name}
           fallback={p.img}
           className="card-photo"

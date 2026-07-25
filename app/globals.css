@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Poppins:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
   --bg: #f2faf5;
@@ -4280,4 +4280,264 @@ footer {
   flex: 1;
   height: 1px;
   background: var(--border);
+}
+/* ===== Kelola Produk (panel admin) ===== */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.btn-outline svg {
+  width: 18px;
+  height: 18px;
+}
+.btn-outline:hover {
+  background: var(--green-soft);
+  border-color: var(--green);
+}
+.btn-outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.kp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.kp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kp-add {
+  white-space: nowrap;
+}
+.kp-add svg {
+  width: 18px;
+  height: 18px;
+}
+
+.kp-alert {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.kp-alert.ok {
+  background: var(--green-soft);
+  color: var(--green-deep);
+  border: 1px solid rgba(47, 161, 90, 0.25);
+}
+.kp-alert.err {
+  background: rgba(214, 69, 69, 0.1);
+  color: #b3341f;
+  border: 1px solid rgba(214, 69, 69, 0.25);
+}
+
+.kp-seed {
+  padding: 16px;
+  border: 1px dashed var(--border-2);
+  border-radius: 14px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.kp-seed p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ---- Form ---- */
+.kp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.kp-photo {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.kp-photo-prev {
+  width: 120px;
+  height: 120px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.kp-photo-prev img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.kp-photo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--faint);
+  text-align: center;
+  padding: 8px;
+}
+.kp-photo-empty svg {
+  width: 26px;
+  height: 26px;
+}
+.kp-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kp-link-del {
+  background: none;
+  border: none;
+  color: #b3341f;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.kp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kp-field > span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.kp-field input,
+.kp-field textarea,
+.kp-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+.kp-field textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+.kp-field input:focus,
+.kp-field textarea:focus,
+.kp-field select:focus {
+  outline: none;
+  border-color: var(--green);
+}
+.kp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.kp-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+.kp-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+}
+.kp-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ---- List ---- */
+.kp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.kp-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  flex: none;
+}
+.kp-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.kp-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kp-meta strong {
+  font-size: 14.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kp-meta small {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.kp-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.kp-del:hover svg {
+  color: #b3341f;
+}
+@media (max-width: 720px) {
+  .kp-row {
+    grid-template-columns: 1fr;
+  }
 }

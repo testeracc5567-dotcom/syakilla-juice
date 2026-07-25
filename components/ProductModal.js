@@ -8,7 +8,7 @@ import { getPurchasedProductIds, getSoldCount } from "@/lib/orders";
 import { money } from "@/lib/format";
 import { Icon } from "./Icons";
 import Photo from "./Photo";
-import { productPhoto } from "@/lib/photos";
+import { productImage } from "@/lib/productImage";
 
 function Stars({ value, size }) {
   const full = Math.round(value || 0);
@@ -112,7 +112,7 @@ export default function ProductModal() {
           <div className="pm-media">
             {p.tag ? <span className="tag">{p.tag}</span> : null}
             <Photo
-              src={productPhoto(p.id)}
+              src={productImage(p)}
               alt={p.name}
               fallback={p.img}
               className="pm-photo"

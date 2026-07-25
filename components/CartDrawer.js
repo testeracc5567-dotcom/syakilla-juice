@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import SITE from "@/lib/data";
 import { useUI } from "@/context/UIContext";
 import { useStore } from "@/context/StoreContext";
