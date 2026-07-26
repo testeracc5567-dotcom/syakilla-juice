@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+// Chat sekarang jalan LEWAT SERVER (Firestore) via /api/chat.
+// Jadi pesan pembeli masuk ke admin walau beda browser / beda HP.
 import {
   createContext,
   useContext,
@@ -6,35 +8,14 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
-import {
-  setPresence,
-  isOnline as presIsOnline,
-  getLastSeen as presGetLastSeen,
-} from "@/lib/presence";
 
 const ChatCtx = createContext(null);
-const CHAT_KEY = "syk_chat_v1";
 const GUEST_KEY = "syk_guest_v1";
-const PRESENCE_KEY = "syk_presence_v1";
-
-function readChat() {
-  if (typeof window === "undefined") return { rooms: {} };
-  try {
-    return JSON.parse(localStorage.getItem(CHAT_KEY) || '{"rooms":{}}');
-  } catch (e) {
-    return { rooms: {} };
-  }
-}
-
-function writeChat(data) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CHAT_KEY, JSON.stringify(data));
-  // Catatan: event 'storage' cuma kebaca di tab LAIN, jadi kita dispatch juga
-  // event custom biar tab yang sekarang ikut ke-update realtime.
-  window.dispatchEvent(new Event("syk-chat-update"));
-}
+const POLL_MS = 4000;
+const ONLINE_WINDOW = 30000;
 
 function guestId() {
   if (typeof window === "undefined") return null;
@@ -48,77 +29,57 @@ function guestId() {
 
 export function ChatProvider({ children }) {
   const { user, isAdmin } = useAuth();
-  const [data, setData] = useState({ rooms: {} });
+  const [rooms, setRooms] = useState([]);
+  const [myMessages, setMyMessages] = useState([]);
+  const [presence, setPresence] = useState({});
+  const [now, setNow] = useState(Date.now());
   const [activeRoom, setActiveRoom] = useState(null);
-  const [presTick, setPresTick] = useState(0);
+  const busy = useRef(false);
 
-  const reload = useCallback(() => setData(readChat()), []);
-
-  // Sinkronisasi chat + presence secara realtime (lintas-tab & dalam-tab).
-  useEffect(() => {
-    reload();
-    const bumpPres = () => setPresTick((t) => t + 1);
-    const onStorage = (e) => {
-      if (!e || e.key === CHAT_KEY) reload();
-      if (e && e.key === PRESENCE_KEY) bumpPres();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("syk-chat-update", reload);
-    window.addEventListener("syk-presence-update", bumpPres);
-    // Re-evaluasi status online tiap 10 detik biar "offline" kedeteksi.
-    const iv = setInterval(bumpPres, 10000);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("syk-chat-update", reload);
-      window.removeEventListener("syk-presence-update", bumpPres);
-      clearInterval(iv);
-    };
-  }, [reload]);
-
-  // Room = identitas percakapan. Pembeli login pakai email, tamu pakai guest id.
   const myRoom = useMemo(() => {
     if (isAdmin) return null;
     if (user && user.email) return user.email;
     return guestId();
   }, [isAdmin, user]);
 
-  // Id presence: admin dianggap "admin", pembeli pakai room-nya.
-  const presenceId = useMemo(
-    () => (isAdmin ? "admin" : myRoom),
-    [isAdmin, myRoom],
-  );
+  const myName = user && user.name ? user.name : "Tamu";
 
-  // Heartbeat: tandai diri sendiri online tiap 8 detik + saat tab balik aktif.
+  const load = useCallback(async () => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      const qs = isAdmin ? "" : myRoom ? "?room=" + encodeURIComponent(myRoom) : "";
+      const res = await fetch("/api/chat" + qs, { cache: "no-store" });
+      const j = await res.json();
+      if (j && j.presence) setPresence(j.presence);
+      if (isAdmin) {
+        if (j && Array.isArray(j.rooms)) setRooms(j.rooms);
+      } else if (j && Array.isArray(j.messages)) {
+        setMyMessages(j.messages);
+      }
+      setNow(Date.now());
+    } catch (e) {
+    } finally {
+      busy.current = false;
+    }
+  }, [isAdmin, myRoom]);
+
   useEffect(() => {
-    if (!presenceId) return;
-    setPresence(presenceId);
-    const iv = setInterval(() => setPresence(presenceId), 8000);
+    load();
+    const iv = setInterval(load, POLL_MS);
+    const tick = setInterval(() => setNow(Date.now()), 10000);
     const onVis = () => {
-      if (document.visibilityState === "visible") setPresence(presenceId);
+      if (document.visibilityState === "visible") load();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(iv);
+      clearInterval(tick);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [presenceId]);
+  }, [load]);
 
-  const ensureRoom = useCallback((roomId, buyerName) => {
-    const d = readChat();
-    if (!d.rooms[roomId]) {
-      d.rooms[roomId] = {
-        id: roomId,
-        buyerName: buyerName || "Pembeli",
-        messages: [],
-      };
-      writeChat(d);
-      setData(d);
-    } else if (buyerName && d.rooms[roomId].buyerName !== buyerName) {
-      d.rooms[roomId].buyerName = buyerName;
-      writeChat(d);
-      setData(d);
-    }
-  }, []);
+  const ensureRoom = useCallback(() => {}, []);
 
   const sendMessage = useCallback(
     (text, opts) => {
@@ -127,51 +88,48 @@ export function ChatProvider({ children }) {
       const options = opts || {};
       const roomId = isAdmin ? options.room || activeRoom : myRoom;
       if (!roomId) return;
-      const d = readChat();
-      if (!d.rooms[roomId]) {
-        d.rooms[roomId] = {
-          id: roomId,
-          buyerName: isAdmin ? "Pembeli" : user && user.name ? user.name : "Tamu",
-          messages: [],
-        };
-      }
-      if (!isAdmin && user && user.name) d.rooms[roomId].buyerName = user.name;
-      d.rooms[roomId].messages.push({
-        id: Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+      const ts = Date.now();
+      const temp = {
+        id: "tmp_" + ts,
+        roomId,
         from: isAdmin ? "admin" : "buyer",
+        buyerName: myName,
         text: t,
-        ts: Date.now(),
-      });
-      writeChat(d);
-      setData({ ...d });
-      // Kirim pesan = tanda kita online.
-      if (presenceId) setPresence(presenceId);
+        ts,
+      };
+      if (isAdmin) {
+        setRooms((prev) =>
+          prev.map((r) =>
+            r.id === roomId
+              ? { ...r, messages: (r.messages || []).concat(temp), last: temp }
+              : r,
+          ),
+        );
+      } else {
+        setMyMessages((prev) => prev.concat(temp));
+      }
+      fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, text: t, buyerName: myName }),
+      })
+        .then(() => load())
+        .catch(() => {});
     },
-    [isAdmin, activeRoom, myRoom, user, presenceId],
+    [isAdmin, activeRoom, myRoom, myName, load],
   );
 
-  // Daftar room buat admin (diurut dari yang paling baru).
-  const rooms = useMemo(() => {
-    const list = Object.values(data.rooms || {}).map((r) => {
-      const msgs = r.messages || [];
-      return { ...r, last: msgs[msgs.length - 1] || null };
-    });
-    list.sort((a, b) => (b.last ? b.last.ts : 0) - (a.last ? a.last.ts : 0));
-    return list;
-  }, [data]);
-
-  const myMessages = useMemo(() => {
-    if (isAdmin || !myRoom) return [];
-    const r = data.rooms && data.rooms[myRoom];
-    return r ? r.messages || [] : [];
-  }, [data, isAdmin, myRoom]);
-
-  // Helper status online (di-recompute tiap presTick berubah).
-  const adminOnline = useMemo(() => presIsOnline("admin"), [presTick]);
-  const isRoomOnline = useCallback((roomId) => presIsOnline(roomId), [presTick]);
+  const adminOnline = useMemo(
+    () => !!presence.admin && now - presence.admin < ONLINE_WINDOW,
+    [presence, now],
+  );
+  const isRoomOnline = useCallback(
+    (roomId) => !!roomId && !!presence[roomId] && now - presence[roomId] < ONLINE_WINDOW,
+    [presence, now],
+  );
   const roomLastSeen = useCallback(
-    (roomId) => presGetLastSeen(roomId),
-    [presTick],
+    (roomId) => (roomId && presence[roomId]) || 0,
+    [presence],
   );
 
   return (
@@ -188,6 +146,7 @@ export function ChatProvider({ children }) {
         adminOnline,
         isRoomOnline,
         roomLastSeen,
+        refreshChat: load,
       }}
     >
       {children}

@@ -300,58 +300,70 @@ export default function ChatWidget() {
     );
   }
 
-  // ---------- Tampilan PEMBELI ----------
+    // ---------- Tampilan PEMBELI (gaya WhatsApp) ----------
   return (
-    <>
-      <div className="chat-pop-scrim" onClick={closeChat} />
-      <div className="chat-pop">
-        <div className="fab-panel chat-panel">
-          <div className="fab-head chat-head">
-            <span className="fab-title">
-              <span className="ai-avatar">
-                <Icon name="chat" />
-              </span>
-              <span className="chat-head-txt">
-                Chat Admin Syakilla
-                <span className="chat-head-sub">
-                  <span className={"pres-dot" + (adminOnline ? " on" : "")} />
-                  {adminOnline ? "Online" : "Offline"}
-                </span>
-              </span>
-            </span>
-            <button className="icon-btn" onClick={closeChat} aria-label="Tutup">
-              <Icon name="close" />
-            </button>
-          </div>
-          <div className="fab-body" ref={bodyRef}>
-            <div className="bubble bot">
-              <span>
-                Hai! Ada yang bisa kami bantu? Chat ini dibalas admin secara
-                real-time.
-              </span>
-            </div>
-            {myMessages.map((m) => (
-              <div
-                key={m.id}
-                className={"bubble " + (m.from === "buyer" ? "me" : "bot")}
-              >
-                <span>{m.text}</span>
-                <span className="bubble-time">{timeStr(m.ts)}</span>
-              </div>
-            ))}
-          </div>
-          <form className="fab-input" onSubmit={submit}>
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Tulis pesan..."
-            />
-            <button className="icon-btn" disabled={!text.trim()} aria-label="Kirim">
-              <Icon name="send" />
-            </button>
-          </form>
+    <div className="wa">
+      <div className="wa-head">
+        <button className="wa-back" onClick={closeChat} aria-label="Kembali">
+          {"\u2190"}
+        </button>
+        <span className="wa-ava">
+          <Icon name="bot" />
+        </span>
+        <div className="wa-head-txt">
+          <strong>Admin Syakilla Juice</strong>
+          <small>{adminOnline ? "online" : "terakhir dilihat baru-baru ini"}</small>
         </div>
+        <button className="wa-head-x" onClick={closeChat} aria-label="Tutup">
+          <Icon name="close" />
+        </button>
       </div>
-    </>
+
+      <div className="wa-body" ref={bodyRef}>
+        <div className="wa-note">
+          Pesan kamu dibalas langsung oleh admin Syakilla Juice.
+        </div>
+        {!myMessages.length ? (
+          <div className="wa-row in">
+            <div className="wa-b">
+              <p className="wa-txt">
+                Hai! Ada yang bisa kami bantu? Tulis pesanmu di bawah ya.
+              </p>
+              <span className="wa-meta">{timeStr(Date.now())}</span>
+            </div>
+          </div>
+        ) : (
+          myMessages.map((m) => (
+            <div
+              key={m.id}
+              className={"wa-row " + (m.from === "buyer" ? "out" : "in")}
+            >
+              <div className="wa-b">
+                <p className="wa-txt">{m.text}</p>
+                <span className="wa-meta">
+                  {timeStr(m.ts)}
+                  {m.from === "buyer" ? (
+                    <b className="wa-tick">{"\u2713\u2713"}</b>
+                  ) : null}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <form className="wa-input" onSubmit={submit}>
+        <div className="wa-field">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Tulis pesan"
+          />
+        </div>
+        <button className="wa-send" aria-label="Kirim">
+          <Icon name="send" />
+        </button>
+      </form>
+    </div>
   );
 }
