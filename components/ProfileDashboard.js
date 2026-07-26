@@ -12,14 +12,26 @@ import {
 } from "@/lib/orders";
 import { getReviewCountByEmail } from "@/lib/reviews";
 import { money } from "@/lib/format";
+import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
 import { Icon } from "./Icons";
 import KelolaProduk from "./KelolaProduk";
 
 const METHOD_LABEL = {
+  qris: "QRIS",
   transfer: "Transfer Bank",
   ewallet: "E-Wallet",
   cod: "COD",
 };
+
+// Batas waktu bayar 20 menit, sama kayak di checkout.
+const PAY_WINDOW_MS = 20 * 60 * 1000;
+
+function mmss(sec) {
+  const s = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return (m < 10 ? "0" + m : "" + m) + ":" + (r < 10 ? "0" + r : "" + r);
+}
 
 // Tier loyalty: 1 poin = Rp 1.000 belanja.
 const TIERS = [
@@ -96,6 +108,8 @@ export default function ProfileDashboard() {
   const { setActiveRoom } = useChat();
   const [, setTick] = useState(0);
   const [loyTab, setLoyTab] = useState("riwayat");
+  const [payOrder, setPayOrder] = useState(null);
+  const [payLeft, setPayLeft] = useState(0);
 
   useEffect(() => {
     const h = () => setTick((t) => t + 1);
@@ -106,6 +120,26 @@ export default function ProfileDashboard() {
       window.removeEventListener("syk-reviews-update", h);
     };
   }, []);
+
+  // Hitung mundur bayar buat pesanan yang dibuka dari tombol Bayar Sekarang.
+  useEffect(() => {
+    if (!payOrder) return;
+    const exp = payOrder.expiresAt || (payOrder.ts || 0) + PAY_WINDOW_MS;
+    const tick = () => {
+      const ms = exp - Date.now();
+      setPayLeft(Math.ceil(Math.max(0, ms) / 1000));
+      if (ms <= 0 && user && user.email) {
+        updateOrderStatus(
+          user.email,
+          payOrder.id,
+          "Dibatalkan (Waktu Bayar Habis)",
+        );
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [payOrder, user]);
 
   if (!dashboardOpen || !user) return null;
 
@@ -174,6 +208,136 @@ export default function ProfileDashboard() {
   return (
     <div className="dash-scrim" onClick={closeDashboard}>
       <div className="dash" onClick={(e) => e.stopPropagation()}>
+        {payOrder ? (
+          <div className="dpay-scrim" onClick={() => setPayOrder(null)}>
+            <div className="dpay" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="dpay-x"
+                onClick={() => setPayOrder(null)}
+                aria-label="Tutup"
+              >
+                <Icon name="close" />
+              </button>
+              <div className="dpay-clock">
+                <strong>{mmss(payLeft)}</strong>
+                <small>sisa waktu bayar</small>
+              </div>
+              <h3 className="serif">Bayar Pesanan #{payOrder.id}</h3>
+              <p className="dpay-total">
+                Total <strong>{money(payOrder.total || 0)}</strong>
+                {" \u00b7 "}
+                {METHOD_LABEL[payOrder.method] || payOrder.method}
+              </p>
+
+              {payLeft <= 0 ? (
+                <div className="dpay-bad">
+                  Waktu pembayaran habis. Pesanan ini otomatis dibatalkan,
+                  silakan pesan lagi ya.
+                </div>
+              ) : (
+                <>
+                  {payOrder.method === "qris" ? (
+                    <div className="co-pay">
+                      <div className="co-pay-h">Scan QRIS ini</div>
+                      {isFilled(QRIS.image) ? (
+                        <img
+                          className="co-qris"
+                          src={QRIS.image}
+                          alt="QRIS Syakilla Juice"
+                        />
+                      ) : (
+                        <div className="co-pay-empty">
+                          QRIS belum tersedia. Hubungi admin lewat chat ya.
+                        </div>
+                      )}
+                      {isFilled(QRIS.merchant) ? (
+                        <div className="co-pay-row">
+                          <span>Merchant</span>
+                          <strong>{QRIS.merchant}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {payOrder.method === "transfer" ? (
+                    <div className="co-pay">
+                      <div className="co-pay-h">Transfer ke</div>
+                      {BANKS.filter((b) => isFilled(b.number)).map((b) => (
+                        <div className="co-pay-row" key={b.bank}>
+                          <span>{b.bank}</span>
+                          <strong>{b.number}</strong>
+                          <small>a.n. {b.holder}</small>
+                        </div>
+                      ))}
+                      {!BANKS.filter((b) => isFilled(b.number)).length ? (
+                        <div className="co-pay-empty">
+                          Nomor rekening belum diisi admin. Chat admin dulu ya.
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {payOrder.method === "ewallet" ? (
+                    <div className="co-pay">
+                      <div className="co-pay-h">Kirim ke</div>
+                      {EWALLETS.filter((w) => isFilled(w.number)).map((w) => (
+                        <div className="co-pay-row" key={w.name}>
+                          <span>{w.name}</span>
+                          <strong>{w.number}</strong>
+                          <small>a.n. {w.holder}</small>
+                        </div>
+                      ))}
+                      {!EWALLETS.filter((w) => isFilled(w.number)).length ? (
+                        <div className="co-pay-empty">
+                          Nomor e-wallet belum diisi admin. Chat admin dulu ya.
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {String(payOrder.status || "")
+                    .toLowerCase()
+                    .includes("menunggu") ? (
+                    <div className="dpay-ok">
+                      Bukti bayar kamu sedang dicek admin. Status pesanan
+                      berubah sendiri begitu pembayaran masuk.
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dpay-btn"
+                      onClick={() => {
+                        updateOrderStatus(
+                          user.email,
+                          payOrder.id,
+                          "Menunggu Konfirmasi",
+                        );
+                        setPayOrder(
+                          Object.assign({}, payOrder, {
+                            status: "Menunggu Konfirmasi",
+                          }),
+                        );
+                        showToast("Makasih! Pembayaran kamu sedang dicek.");
+                      }}
+                    >
+                      <Icon name="check" /> Saya Sudah Bayar
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="dpay-later"
+                    onClick={() => setPayOrder(null)}
+                  >
+                    Nanti aja
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ) : null}
+
         <button
           className="dash-x icon-btn"
           onClick={closeDashboard}
@@ -408,6 +572,14 @@ export default function ProfileDashboard() {
                           <button className="dash-chat-btn" onClick={chatAdmin}>
                             <Icon name="chat" /> Chat Admin
                           </button>
+                          {!done && !cancelled && !isPaid(o) && o.method !== "cod" ? (
+                            <button
+                              className="dash-pay-btn"
+                              onClick={() => setPayOrder(o)}
+                            >
+                              <Icon name="card" /> Bayar Sekarang
+                            </button>
+                          ) : null}
                           {!done && !cancelled ? (
                             <button
                               className="dash-cancel-btn"

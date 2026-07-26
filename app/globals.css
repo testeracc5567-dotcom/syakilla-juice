@@ -6024,3 +6024,153 @@ footer {
   cursor: pointer;
 }
 .co-wait-x:hover { border-color: var(--green); color: var(--green-deep); }
+
+/* ====== BAYAR PESANAN DARI HALAMAN PESANAN SAYA ====== */
+.dash-pay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dash-pay-btn:hover {
+  background: var(--green-deep);
+}
+.dash-pay-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.dpay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(10, 40, 25, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.dpay {
+  position: relative;
+  z-index: 410;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 26px 22px 22px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(10, 40, 25, 0.28);
+}
+.dpay-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.dpay-x:hover {
+  background: #f3f6f4;
+}
+.dpay-clock {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: rgba(244, 168, 37, 0.16);
+  margin-bottom: 12px;
+}
+.dpay-clock strong {
+  font-size: 30px;
+  font-weight: 800;
+  color: #96620a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dpay-clock small {
+  font-size: 11px;
+  color: #96620a;
+  letter-spacing: 0.03em;
+}
+.dpay h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: var(--text);
+}
+.dpay-total {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.dpay .co-pay {
+  text-align: left;
+  margin-bottom: 14px;
+}
+.dpay-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+.dpay-btn:hover {
+  background: var(--green-deep);
+}
+.dpay-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.dpay-ok {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(47, 161, 90, 0.14);
+  color: var(--green-deep);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+.dpay-bad {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(192, 57, 43, 0.12);
+  color: #a5301f;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+.dpay-later {
+  margin-top: 10px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dpay-later:hover {
+  color: var(--text);
+}
