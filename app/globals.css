@@ -5332,3 +5332,253 @@ footer {
   font-weight: 700;
   color: var(--text);
 }
+
+/* ====== PERBAIKAN PANEL CHAT PEMBELI ====== */
+.chat-pop {
+  position: fixed;
+  top: auto;
+  bottom: 96px;
+  right: 24px;
+  left: auto;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  width: 370px;
+  max-width: calc(100vw - 32px);
+  height: 520px;
+  max-height: calc(100vh - 140px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(10, 40, 24, 0.28);
+}
+.chat-pop-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--gold), #e08a1e);
+  color: #fff;
+}
+.chat-pop-head .icon-btn { color: #fff; }
+.chat-pop-id { display: flex; align-items: center; gap: 10px; }
+.chat-pop-ava {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.chat-pop-ava svg { width: 19px; height: 19px; }
+.chat-pop-ava.big {
+  width: 54px;
+  height: 54px;
+  background: rgba(47, 161, 90, 0.14);
+  color: var(--green-deep);
+}
+.chat-pop-ava.big svg { width: 26px; height: 26px; }
+.chat-pop-id-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1.25; }
+.chat-pop-id-txt strong { font-size: 14.5px; }
+.chat-pop-head .chat-head-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  opacity: 0.95;
+}
+.chat-pop-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: var(--bg);
+}
+.chat-pop-empty {
+  margin: auto;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.bubble.them {
+  align-self: flex-start;
+  background: var(--surface);
+  color: var(--text);
+  border-bottom-left-radius: 5px;
+  box-shadow: 0 2px 8px rgba(20, 70, 42, 0.07);
+}
+.bubble small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  opacity: 0.65;
+  text-align: right;
+}
+.chat-pop-input {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-pop-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13.5px;
+}
+.chat-pop-input input:focus { outline: none; border-color: var(--green); }
+.chat-pop-input .icon-btn.send {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  background: var(--green);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.chat-pop-input .icon-btn.send svg { width: 18px; height: 18px; }
+@media (max-width: 520px) {
+  .chat-pop {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: 88px;
+    height: min(72vh, 480px);
+  }
+}
+
+/* ====== BUKU ALAMAT DI CHECKOUT ====== */
+.co-addr { display: flex; flex-direction: column; gap: 11px; }
+.co-addr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.co-addr-head > span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.co-addr-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid rgba(47, 161, 90, 0.35);
+  border-radius: 9px;
+  background: rgba(47, 161, 90, 0.08);
+  color: var(--green-deep);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.co-addr-add svg { width: 14px; height: 14px; }
+.co-addr-add:hover { background: var(--green); border-color: var(--green); color: #fff; }
+.co-addr-list { display: flex; flex-direction: column; gap: 9px; }
+.co-addr-item {
+  border: 1.5px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  overflow: hidden;
+  transition: all 0.18s ease;
+}
+.co-addr-item.on { border-color: var(--green); background: rgba(47, 161, 90, 0.05); }
+.co-addr-pick {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 13px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+.co-addr-item .co-dot { margin-top: 3px; flex: none; }
+.co-addr-item.on .co-dot {
+  border-color: var(--green);
+  background: var(--green);
+  box-shadow: inset 0 0 0 3px #fff;
+}
+.co-addr-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.co-addr-txt strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.co-addr-txt small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.co-addr-badge {
+  font-style: normal;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(244, 168, 37, 0.18);
+  color: #96620a;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.co-addr-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 13px 11px 45px;
+}
+.co-addr-acts button {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--green-deep);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.co-addr-acts button:hover { border-color: var(--green); background: rgba(47, 161, 90, 0.1); }
+.co-addr-acts button.del { color: #b3341f; }
+.co-addr-acts button.del:hover {
+  border-color: rgba(179, 52, 31, 0.4);
+  background: rgba(179, 52, 31, 0.08);
+}
+.co-addr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px;
+  border: 1px dashed rgba(47, 161, 90, 0.4);
+  border-radius: 13px;
+  background: rgba(47, 161, 90, 0.04);
+}
+.co-addr-form textarea { min-height: 74px; resize: vertical; }
+.co-addr-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+.co-addr-check input { width: 16px; height: 16px; accent-color: var(--green); }
+.co-addr-form-acts { display: flex; gap: 9px; }

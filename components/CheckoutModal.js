@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { useUI } from "@/context/UIContext";
 import { useStore } from "@/context/StoreContext";
 import { useChat } from "@/context/ChatContext";
 import { saveOrder } from "@/lib/orders";
+import AddressPicker from "./AddressPicker";
 import { money } from "@/lib/format";
 import { SHIPPING_FEE, VOUCHERS, applyVoucher } from "@/lib/vouchers";
 import { Icon } from "./Icons";
@@ -53,6 +54,14 @@ export default function CheckoutModal() {
     address: "",
     note: "",
   });
+  const pickAddress = (a) =>
+    setForm((f) =>
+      Object.assign({}, f, {
+        name: a.name || f.name,
+        phone: a.phone || f.phone,
+        address: a.address || f.address,
+      }),
+    );
   const [codeInput, setCodeInput] = useState("");
   const [applied, setApplied] = useState("");
   const [vErr, setVErr] = useState("");
@@ -303,14 +312,12 @@ export default function CheckoutModal() {
                   </label>
                 </div>
                 {delivery === "kirim" ? (
-                  <label className="co-field">
-                    <span>Alamat Pengiriman</span>
-                    <input
-                      value={form.address}
-                      onChange={set("address")}
-                      placeholder="Nama jalan, nomor rumah, patokan"
-                    />
-                  </label>
+                  <AddressPicker
+                    owner={myRoom}
+                    value={form.address}
+                    onChange={pickAddress}
+                    onManualChange={set("address")}
+                  />
                 ) : null}
                 <label className="co-field">
                   <span>Catatan (opsional)</span>
