@@ -6174,3 +6174,37 @@ footer {
 .dpay-later:hover {
   color: var(--text);
 }
+
+/* ====== SATU TOMBOL STATUS BUAT ADMIN ====== */
+.ord-next-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ord-next-btn:hover {
+  background: var(--green-deep);
+}
+.ord-next-btn svg {
+  width: 17px;
+  height: 17px;
+}
+.ord-sts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.ord-sts-h {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}

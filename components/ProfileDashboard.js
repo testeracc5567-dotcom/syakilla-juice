@@ -44,13 +44,46 @@ const STEPS = ["Dibayar", "Diproses", "Dikirim", "Selesai"];
 
 // Pesanan dianggap dibayar kalau statusnya Dibayar / Dikirim / Selesai.
 // COD baru dianggap dibayar kalau udah Selesai.
-function isPaid(o) {
-  const s = String((o && o.status) || "").toLowerCase();
-  if (s.includes("batal") || s.includes("belum")) return false;
-  if (o && o.method === "cod") return s.includes("selesai");
-  return s.includes("dibayar") || s.includes("dikirim") || s.includes("selesai");
+// Dibayar = Dibayar / Diproses / Dikirim / Selesai. COD baru pas Selesai.
+function isPaid(arg) {
+  const o = arg && typeof arg === "object" ? arg : { status: arg };
+  const s = String(o.status || "").toLowerCase();
+  if (s.includes("batal") || s.includes("belum") || s.includes("menunggu"))
+    return false;
+  if (o.method === "cod") return s.includes("selesai");
+  return (
+    s.includes("dibayar") ||
+    s.includes("diproses") ||
+    s.includes("dikirim") ||
+    s.includes("selesai")
+  );
 }
 
+// Pembeli cuma lihat tombol Bayar Sekarang kalau memang belum bayar.
+function needsPay(o) {
+  if (!o || o.method === "cod") return false;
+  const s = String(o.status || "").toLowerCase();
+  if (s.includes("batal")) return false;
+  return s.includes("belum") || s.includes("menunggu");
+}
+
+// Admin cuma butuh 1 tombol: status berikutnya dari status sekarang.
+function nextStatus(status) {
+  const s = String(status || "").toLowerCase();
+  if (s.includes("batal") || s.includes("selesai")) return "";
+  if (s.includes("dikirim")) return "Selesai";
+  if (s.includes("diproses")) return "Dikirim";
+  if (s.includes("dibayar")) return "Diproses";
+  return "Dibayar";
+}
+
+// Label pembatalan biar pembeli tahu siapa yang batalin.
+function cancelLabel(status) {
+  const s = String(status || "").toLowerCase();
+  if (s.includes("penjual")) return "Dibatalkan oleh Penjual";
+  if (s.includes("waktu")) return "Dibatalkan (Waktu Bayar Habis)";
+  return "Pesanan Dibatalkan";
+}
 function dateStr(ts) {
   try {
     return new Date(ts).toLocaleDateString("id-ID", {
@@ -76,7 +109,7 @@ function stepIndex(status) {
 // Titik-titik progres status pesanan. Kalau dibatalkan, tampilkan label khusus.
 function OrderSteps({ status }) {
   if (isOrderCancelled(status)) {
-    return <span className="dash-cancelled-tag">Pesanan Dibatalkan</span>;
+    return <span className="dash-cancelled-tag">{cancelLabel(status)}</span>;
   }
   const idx = stepIndex(status);
   return (
@@ -572,7 +605,7 @@ export default function ProfileDashboard() {
                           <button className="dash-chat-btn" onClick={chatAdmin}>
                             <Icon name="chat" /> Chat Admin
                           </button>
-                          {!done && !cancelled && !isPaid(o) && o.method !== "cod" ? (
+                          {needsPay(o) ? (
                             <button
                               className="dash-pay-btn"
                               onClick={() => setPayOrder(o)}
@@ -662,37 +695,22 @@ export default function ProfileDashboard() {
                           </small>
                         </div>
 
-                        <div className="ord-sts">
-                          <span className="ord-sts-h">
-                            Klik buat ubah status:
-                          </span>
-                          <div className="ord-sts-btns">
-                            {STEPS.map((s) => (
-                              <button
-                                key={s}
-                                type="button"
-                                className={
-                                  "ord-sts-btn" +
-                                  (String(o.status || "") === s ? " on" : "")
-                                }
-                                onClick={() => setOrderStatus(roomId, o.id, s)}
-                              >
-                                {s}
-                              </button>
-                            ))}
+                        {nextStatus(o.status) ? (
+                          <div className="ord-sts">
+                            <span className="ord-sts-h">
+                              Status sekarang: {o.status || "Belum Dibayar"}
+                            </span>
                             <button
                               type="button"
-                              className={
-                                "ord-sts-btn cancel" + (cancelled ? " on" : "")
-                              }
+                              className="ord-next-btn"
                               onClick={() =>
-                                setOrderStatus(roomId, o.id, "Dibatalkan")
+                                setOrderStatus(roomId, o.id, nextStatus(o.status))
                               }
                             >
-                              Dibatalkan
+                              <Icon name="check" /> Tandai {nextStatus(o.status)}
                             </button>
                           </div>
-                        </div>
+                        ) : null}
 
                         <div className="dash-order-actions">
                           <button
@@ -707,6 +725,20 @@ export default function ProfileDashboard() {
                               onClick={() => markDone(roomId, o.id)}
                             >
                               <Icon name="check" /> Tandai Selesai
+                            </button>
+                          ) : null}
+                          {!cancelled ? (
+                            <button
+                              className="dash-cancel-btn"
+                              onClick={() =>
+                                setOrderStatus(
+                                  roomId,
+                                  o.id,
+                                  "Dibatalkan oleh Penjual",
+                                )
+                              }
+                            >
+                              <Icon name="close" /> Batalkan Pesanan
                             </button>
                           ) : null}
                         </div>
