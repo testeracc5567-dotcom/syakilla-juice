@@ -9,7 +9,11 @@ import { money } from "@/lib/format";
 import { SHIPPING_FEE, POINT_VOUCHERS, applyVoucher } from "@/lib/vouchers";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
 import { useAuth } from "@/context/AuthContext";
-import { getCustomerOrders } from "@/lib/orders";
+import {
+  getCustomerOrders,
+  updateOrderStatus,
+  refreshOrders,
+} from "@/lib/orders";
 import { Icon } from "./Icons";
 
 const METHODS = [
@@ -51,6 +55,16 @@ const METHOD_NOTE = {
   cod: "Siapkan uang pas ya biar cepat.",
 };
 
+// Batas waktu bayar: 20 menit.
+const PAY_WINDOW_MS = 20 * 60 * 1000;
+
+function mmss(sec) {
+  const s = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return (m < 10 ? "0" + m : "" + m) + ":" + (r < 10 ? "0" + r : "" + r);
+}
+
 export default function CheckoutModal() {
   const { checkoutOpen, closeCheckout } = useUI();
   const { cart, subtotal, P, clear, changeQty } = useStore();
@@ -80,6 +94,49 @@ export default function CheckoutModal() {
   const [stage, setStage] = useState("form"); // form | processing | done
   const [orderId, setOrderId] = useState("");
   const [receipt, setReceipt] = useState(null);
+
+  const [expiresAt, setExpiresAt] = useState(0);
+  const [left, setLeft] = useState(0);
+  const [payStatus, setPayStatus] = useState("");
+
+  // Selama nunggu bayar: hitung mundur + pantau status pesanan realtime.
+  useEffect(() => {
+    if (stage !== "waiting" || !orderId) return;
+
+    const tick = () => {
+      const ms = expiresAt - Date.now();
+      setLeft(Math.ceil(Math.max(0, ms) / 1000));
+
+      const list = getCustomerOrders(myRoom).orders || [];
+      const cur = list.find((o) => o.id === orderId);
+      const st = String((cur && cur.status) || "").toLowerCase();
+
+      if (st.includes("batal")) {
+        setPayStatus(ms <= 0 ? "expired" : "cancel");
+        return;
+      }
+      if (st && !st.includes("belum") && !st.includes("menunggu")) {
+        setPayStatus("paid");
+        setStage("done");
+        return;
+      }
+      if (ms <= 0) {
+        setPayStatus("expired");
+        updateOrderStatus(myRoom, orderId, "Dibatalkan (Waktu Bayar Habis)");
+      }
+    };
+
+    tick();
+    const iv = setInterval(() => {
+      refreshOrders(myRoom);
+      tick();
+    }, 3000);
+    window.addEventListener("syk-orders-update", tick);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("syk-orders-update", tick);
+    };
+  }, [stage, orderId, expiresAt, myRoom]);
 
   if (!checkoutOpen) return null;
 
@@ -169,7 +226,10 @@ export default function CheckoutModal() {
 
     setTimeout(() => {
       const newId = "SYK" + Math.floor(100000 + Math.random() * 900000);
+      const exp = Date.now() + PAY_WINDOW_MS;
       setOrderId(newId);
+      setExpiresAt(exp);
+      setLeft(Math.ceil(PAY_WINDOW_MS / 1000));
       setReceipt(snap);
       saveOrder(myRoom, {
         customer: cust,
@@ -185,10 +245,12 @@ export default function CheckoutModal() {
           method: snap.method,
           note: form.note,
           ts: Date.now(),
+          expiresAt: method === "cod" ? 0 : exp,
           status: method === "cod" ? "Diproses" : "Belum Dibayar",
         },
       });
-      setStage("done");
+      setPayStatus(method === "cod" ? "paid" : "");
+      setStage(method === "cod" ? "done" : "waiting");
       clear();
     }, 2000);
   };
@@ -198,7 +260,10 @@ export default function CheckoutModal() {
     setTimeout(() => {
       setStage("form");
       setForm({ name: "", phone: "", address: "", note: "" });
-      setMethod("transfer");
+      setMethod("qris");
+      setExpiresAt(0);
+      setLeft(0);
+      setPayStatus("");
       setDelivery("kirim");
       setApplied("");
       setCodeInput("");
@@ -229,12 +294,121 @@ export default function CheckoutModal() {
           </button>
         </header>
 
-        {stage === "done" ? (
+        {stage === "waiting" ? (
+          <div className="co-wait">
+            <div className="co-wait-clock">
+              <strong>{mmss(left)}</strong>
+              <small>sisa waktu bayar</small>
+            </div>
+            <h2 className="serif">Menunggu Pembayaran</h2>
+            <p>
+              Pesanan <strong>#{orderId}</strong> udah masuk. Selesaikan
+              pembayaran{" "}
+              <strong>{money(receipt ? receipt.total : total)}</strong> sebelum
+              waktunya habis ya.
+            </p>
+
+            {payStatus === "expired" ? (
+              <div className="co-wait-bad">
+                Waktu pembayaran habis. Pesanan otomatis dibatalkan, silakan
+                pesan lagi.
+              </div>
+            ) : payStatus === "cancel" ? (
+              <div className="co-wait-bad">
+                Pesanan ini dibatalkan oleh admin.
+              </div>
+            ) : (
+              <>
+                {method === "qris" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Scan QRIS ini</div>
+                    {isFilled(QRIS.image) ? (
+                      <img
+                        className="co-qris"
+                        src={QRIS.image}
+                        alt="QRIS Syakilla Juice"
+                      />
+                    ) : (
+                      <div className="co-pay-empty">
+                        QRIS belum tersedia. Hubungi admin lewat chat ya.
+                      </div>
+                    )}
+                    {isFilled(QRIS.merchant) ? (
+                      <div className="co-pay-row">
+                        <span>Merchant</span>
+                        <strong>{QRIS.merchant}</strong>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {method === "transfer" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Transfer ke</div>
+                    {BANKS.filter((b) => isFilled(b.number)).map((b) => (
+                      <div className="co-pay-row" key={b.bank}>
+                        <span>{b.bank}</span>
+                        <strong>{b.number}</strong>
+                        <small>a.n. {b.holder}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {method === "ewallet" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Kirim ke</div>
+                    {EWALLETS.filter((w) => isFilled(w.number)).map((w) => (
+                      <div className="co-pay-row" key={w.name}>
+                        <span>{w.name}</span>
+                        <strong>{w.number}</strong>
+                        <small>a.n. {w.holder}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {payStatus === "checking" ? (
+                  <div className="co-wait-ok">
+                    Bukti bayar kamu sedang dicek admin. Halaman ini update
+                    sendiri begitu pembayaran masuk.
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="co-wait-btn"
+                    onClick={() => {
+                      updateOrderStatus(myRoom, orderId, "Menunggu Konfirmasi");
+                      setPayStatus("checking");
+                    }}
+                  >
+                    Saya Sudah Bayar
+                  </button>
+                )}
+
+                <p className="co-wait-note">
+                  Begitu pembayaran masuk dan dikonfirmasi admin, tulisan di
+                  sini otomatis berubah jadi Pesanan Berhasil Dibayar. Nggak
+                  perlu refresh.
+                </p>
+              </>
+            )}
+
+            <button type="button" className="co-wait-x" onClick={close}>
+              Tutup
+            </button>
+          </div>
+        ) : stage === "done" ? (
+
           <div className="co-done">
             <div className="co-check">
               <Icon name="check" />
             </div>
-            <h2 className="serif">Pesanan Berhasil Dibuat!</h2>
+            <h2 className="serif">
+              {payStatus === "paid" && method !== "cod"
+                ? "Pesanan Berhasil Dibayar!"
+                : "Pesanan Berhasil Dibuat!"}
+            </h2>
             <p>
               Nomor pesanan <strong>#{orderId}</strong>. Kami langsung siapin
               jusnya. Makasih udah belanja di Syakilla Juice!

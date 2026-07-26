@@ -5922,3 +5922,105 @@ footer {
   border: 1px solid var(--border);
   background: #fff;
 }
+
+/* ====== HALAMAN MENUNGGU PEMBAYARAN (20 MENIT) ====== */
+.co-wait {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 34px 20px 46px;
+}
+.co-wait > p {
+  max-width: 460px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.co-wait h2 { margin: 14px 0 6px; font-size: 26px; color: var(--text); }
+.co-wait-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(244, 168, 37, 0.16);
+  border: 1px solid rgba(244, 168, 37, 0.45);
+  border-radius: 16px;
+  padding: 12px 26px;
+}
+.co-wait-clock strong {
+  font-size: 34px;
+  letter-spacing: 0.04em;
+  color: #96620a;
+  font-variant-numeric: tabular-nums;
+}
+.co-wait-clock small {
+  font-size: 11.5px;
+  color: #96620a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.co-wait .co-pay { width: 100%; max-width: 400px; text-align: left; }
+.co-wait-btn {
+  margin-top: 14px;
+  width: 100%;
+  max-width: 400px;
+  border: 0;
+  background: var(--green);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.co-wait-btn:hover { background: var(--green-deep); }
+.co-wait-ok {
+  margin-top: 14px;
+  width: 100%;
+  max-width: 400px;
+  background: rgba(47, 161, 90, 0.12);
+  color: var(--green-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.55;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.co-wait-bad {
+  margin-top: 6px;
+  width: 100%;
+  max-width: 400px;
+  background: rgba(192, 57, 43, 0.1);
+  color: #a5301f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.co-wait-note {
+  max-width: 400px;
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.co-wait-x {
+  margin-top: 18px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.co-wait-x:hover { border-color: var(--green); color: var(--green-deep); }
