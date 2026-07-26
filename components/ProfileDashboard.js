@@ -165,6 +165,13 @@ export default function ProfileDashboard() {
         </button>
 
         <aside className="dash-side">
+          <button
+            className="dash-back"
+            onClick={closeDashboard}
+            aria-label="Kembali ke website"
+          >
+            <span aria-hidden="true">{"\u2190"}</span> Kembali ke Website
+          </button>
           <div className="dash-brand">Syakilla Juice</div>
           <div className="dash-brand-sub">
             Kelola akun, pesanan, dan poin kamu di satu tempat.

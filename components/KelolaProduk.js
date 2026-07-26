@@ -366,7 +366,8 @@ export default function KelolaProduk() {
                 <div className="kp-meta">
                   <strong>{p.name}</strong>
                   <small>
-                    {p.cat} · {money(p.price)}
+                    {p.cat} · {money(p.price)}{" \u00b7 Stok "}
+                    {p.stock != null ? p.stock : 0}
                     {p.featured ? " · Unggulan" : ""}
                   </small>
                 </div>
