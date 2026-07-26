@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 // Panel admin buat kelola produk: tambah, edit, hapus, upload foto.
 // List-nya realtime dari ProductsContext (langsung update begitu ada perubahan).
 import { useState, useRef } from "react";
@@ -12,6 +12,7 @@ const EMPTY = {
   name: "",
   cat: "",
   price: "",
+  stock: "",
   desc: "",
   tag: "",
   stars: 5,
@@ -83,6 +84,7 @@ export default function KelolaProduk() {
       name: p.name || "",
       cat: p.cat || "",
       price: p.price != null ? String(p.price) : "",
+      stock: p.stock != null ? String(p.stock) : "",
       desc: p.desc || "",
       tag: p.tag || "",
       stars: p.stars != null ? p.stars : 5,
@@ -124,6 +126,7 @@ export default function KelolaProduk() {
       name: form.name.trim(),
       cat: form.cat.trim(),
       price: Number(form.price) || 0,
+      stock: Number(form.stock) || 0,
       desc: form.desc.trim(),
       tag: form.tag.trim(),
       stars: Number(form.stars) || 0,
@@ -225,6 +228,20 @@ export default function KelolaProduk() {
 
       {form ? (
         <div className="kp-form">
+          <div className="kp-form-top">
+            <button
+              type="button"
+              className="kp-back"
+              onClick={cancel}
+              disabled={busy}
+            >
+              <span aria-hidden="true">{"\u2190"}</span> Kembali
+            </button>
+            <strong className="kp-form-title">
+              {editingId ? "Edit Produk" : "Tambah Produk"}
+            </strong>
+          </div>
+
           <div className="kp-photo">
             <div className="kp-photo-prev">
               {form.imageData ? (
@@ -317,17 +334,14 @@ export default function KelolaProduk() {
               />
             </label>
             <label className="kp-field">
-              <span>Rating awal</span>
-              <select
-                value={form.stars}
-                onChange={(e) => set("stars", Number(e.target.value))}
-              >
-                {[5, 4.5, 4, 3.5, 3].map((s) => (
-                  <option value={s} key={s}>
-                    {s} bintang
-                  </option>
-                ))}
-              </select>
+              <span>Stok</span>
+              <input
+                type="number"
+                min="0"
+                value={form.stock}
+                onChange={(e) => set("stock", e.target.value)}
+                placeholder="0"
+              />
             </label>
           </div>
 
@@ -366,27 +380,30 @@ export default function KelolaProduk() {
                 <div className="kp-meta">
                   <strong>{p.name}</strong>
                   <small>
-                    {p.cat} · {money(p.price)}{" \u00b7 Stok "}
+                    {p.cat}
+                    {" \u00b7 "}
+                    {money(p.price)}
+                    {" \u00b7 Stok "}
                     {p.stock != null ? p.stock : 0}
-                    {p.featured ? " · Unggulan" : ""}
+                    {p.featured ? " \u00b7 Unggulan" : ""}
                   </small>
                 </div>
                 <div className="kp-actions">
                   <button
-                    className="icon-btn"
+                    type="button"
+                    className="kp-btn"
                     onClick={() => startEdit(p)}
-                    aria-label="Edit"
                     disabled={busy}
                   >
-                    <Icon name="edit" />
+                    <Icon name="edit" /> Edit
                   </button>
                   <button
-                    className="icon-btn kp-del"
+                    type="button"
+                    className="kp-btn del"
                     onClick={() => remove(p)}
-                    aria-label="Hapus"
                     disabled={busy}
                   >
-                    <Icon name="trash" />
+                    <Icon name="trash" /> Hapus
                   </button>
                 </div>
               </div>

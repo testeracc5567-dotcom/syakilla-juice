@@ -5284,3 +5284,51 @@ footer {
 @media (max-width: 620px) {
   .rv-card { flex-basis: 275px; width: 275px; }
 }
+
+/* ============================================================
+   TOMBOL KEMBALI DI FORM EDIT PRODUK
+   ============================================================ */
+.kp-form-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.kp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 13px;
+  border: 1px solid rgba(47, 161, 90, 0.35);
+  border-radius: 11px;
+  background: rgba(47, 161, 90, 0.08);
+  color: var(--green-deep);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.kp-back span {
+  font-size: 15px;
+  transition: transform 0.18s ease;
+}
+.kp-back:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.kp-back:hover span {
+  transform: translateX(-3px);
+}
+.kp-back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.kp-form-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
