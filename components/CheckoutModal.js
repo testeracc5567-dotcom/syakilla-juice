@@ -6,10 +6,19 @@ import { useChat } from "@/context/ChatContext";
 import { saveOrder } from "@/lib/orders";
 import AddressPicker from "./AddressPicker";
 import { money } from "@/lib/format";
-import { SHIPPING_FEE, VOUCHERS, applyVoucher } from "@/lib/vouchers";
+import { SHIPPING_FEE, POINT_VOUCHERS, applyVoucher } from "@/lib/vouchers";
+import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
+import { useAuth } from "@/context/AuthContext";
+import { getCustomerOrders } from "@/lib/orders";
 import { Icon } from "./Icons";
 
 const METHODS = [
+  {
+    id: "qris",
+    label: "QRIS",
+    desc: "Scan pakai bank / e-wallet apa aja",
+    icon: "card",
+  },
   {
     id: "transfer",
     label: "Transfer Bank",
@@ -36,8 +45,9 @@ const DELIVERY = [
 ];
 
 const METHOD_NOTE = {
-  transfer: "Nomor rekening dikirim lewat chat setelah pesanan masuk.",
-  ewallet: "Link / nomor e-wallet dikirim lewat chat setelah pesanan masuk.",
+  qris: "Scan QRIS di bawah, lalu kirim bukti bayar lewat chat.",
+  transfer: "Transfer ke salah satu rekening di bawah, lalu kirim buktinya lewat chat.",
+  ewallet: "Kirim ke salah satu e-wallet di bawah, lalu kirim buktinya lewat chat.",
   cod: "Siapkan uang pas ya biar cepat.",
 };
 
@@ -45,8 +55,9 @@ export default function CheckoutModal() {
   const { checkoutOpen, closeCheckout } = useUI();
   const { cart, subtotal, P, clear, changeQty } = useStore();
   const { myRoom } = useChat();
+  const { user } = useAuth();
 
-  const [method, setMethod] = useState("transfer");
+  const [method, setMethod] = useState("qris");
   const [delivery, setDelivery] = useState("kirim");
   const [form, setForm] = useState({
     name: "",
@@ -73,6 +84,15 @@ export default function CheckoutModal() {
   if (!checkoutOpen) return null;
 
   const entries = Object.entries(cart);
+
+  // Poin loyalty: 1 poin = Rp 1.000 dari pesanan yang udah Selesai.
+  const myOrders =
+    user && user.email ? getCustomerOrders(user.email).orders || [] : [];
+  const doneSpend = myOrders
+    .filter((o) => String(o.status || "").toLowerCase().includes("selesai"))
+    .reduce((s, o) => s + (o.total || 0), 0);
+  const points = Math.floor(doneSpend / 1000);
+
   const shipping = delivery === "kirim" ? SHIPPING_FEE : 0;
   const vres = applyVoucher(applied, subtotal, shipping);
   const discount = vres.ok ? vres.discount : 0;
@@ -81,22 +101,28 @@ export default function CheckoutModal() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const useCode = (raw) => {
-    const c = String(raw || "")
-      .trim()
-      .toUpperCase();
-    if (!c) {
-      setVErr("Masukin kode vouchernya dulu.");
+  // Tukar poin jadi voucher.
+  const redeem = (v) => {
+    if (applied === v.code) {
+      setApplied("");
+      setVErr("");
       return;
     }
-    const r = applyVoucher(c, subtotal, shipping);
+    if (points < v.cost) {
+      setApplied("");
+      setVErr(
+        "Poin kamu " + points + ", butuh " + v.cost + " poin buat tukar voucher ini.",
+      );
+      return;
+    }
+    const r = applyVoucher(v.code, subtotal, shipping);
     if (!r.ok) {
       setApplied("");
-      setVErr(r.error || "Kode voucher tidak valid.");
+      setVErr(r.error || "Voucher belum bisa dipakai.");
       return;
     }
-    setApplied(c);
-    setCodeInput(c);
+    setApplied(v.code);
+    setCodeInput(v.code);
     setVErr("");
   };
 
@@ -159,7 +185,7 @@ export default function CheckoutModal() {
           method: snap.method,
           note: form.note,
           ts: Date.now(),
-          status: "Diproses",
+          status: method === "cod" ? "Diproses" : "Belum Dibayar",
         },
       });
       setStage("done");
@@ -355,6 +381,67 @@ export default function CheckoutModal() {
                   ))}
                 </div>
                 <p className="co-hint">{METHOD_NOTE[method]}</p>
+
+                {method === "qris" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Bayar pakai QRIS</div>
+                    {isFilled(QRIS.image) ? (
+                      <img className="co-qris" src={QRIS.image} alt="QRIS Syakilla Juice" />
+                    ) : (
+                      <div className="co-pay-empty">
+                        QRIS sedang disiapkan. Sementara pilih Transfer Bank /
+                        E-Wallet dulu ya.
+                      </div>
+                    )}
+                    {isFilled(QRIS.merchant) ? (
+                      <div className="co-pay-row">
+                        <span>Merchant</span>
+                        <strong>{QRIS.merchant}</strong>
+                      </div>
+                    ) : null}
+                    <small className="co-pay-note">{QRIS.note}</small>
+                  </div>
+                ) : null}
+
+                {method === "transfer" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Nomor Rekening</div>
+                    {BANKS.filter((b) => isFilled(b.number)).length ? (
+                      BANKS.filter((b) => isFilled(b.number)).map((b) => (
+                        <div className="co-pay-row" key={b.bank}>
+                          <span>{b.bank}</span>
+                          <strong>{b.number}</strong>
+                          <small>a.n. {b.holder}</small>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="co-pay-empty">
+                        Nomor rekening belum diisi. Nomor akan dikirim lewat chat
+                        setelah pesanan masuk.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {method === "ewallet" ? (
+                  <div className="co-pay">
+                    <div className="co-pay-h">Nomor E-Wallet</div>
+                    {EWALLETS.filter((w) => isFilled(w.number)).length ? (
+                      EWALLETS.filter((w) => isFilled(w.number)).map((w) => (
+                        <div className="co-pay-row" key={w.name}>
+                          <span>{w.name}</span>
+                          <strong>{w.number}</strong>
+                          <small>a.n. {w.holder}</small>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="co-pay-empty">
+                        Nomor e-wallet belum diisi. Nomor akan dikirim lewat chat
+                        setelah pesanan masuk.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </section>
             </div>
 
@@ -405,63 +492,53 @@ export default function CheckoutModal() {
 
                 <div className="co-vou">
                   <div className="co-vou-h">
-                    <Icon name="sparkle" /> Punya Voucher?
+                    <Icon name="sparkle" /> Tukar Poin Jadi Voucher
                   </div>
-                  <div className="co-vou-row">
-                    <input
-                      value={codeInput}
-                      onChange={(e) => setCodeInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          useCode(codeInput);
-                        }
-                      }}
-                      placeholder="Masukin kode voucher"
-                    />
-                    {applied ? (
-                      <button
-                        type="button"
-                        className="co-vou-btn ghost"
-                        onClick={clearCode}
-                      >
-                        Hapus
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="co-vou-btn"
-                        onClick={() => useCode(codeInput)}
-                      >
-                        Pakai
-                      </button>
-                    )}
+                  <div className="co-poin">
+                    Poin kamu: <strong>{points}</strong> poin
                   </div>
 
                   {vErr ? <div className="co-err">{vErr}</div> : null}
                   {applied && vres.ok ? (
                     <div className="co-ok">
-                      Voucher <strong>{applied}</strong> kepakai{" "}
-                      {"\u2014"} {vres.voucher.label}
+                      Voucher <strong>{vres.voucher.label}</strong> kepakai.{" "}
+                      <button
+                        type="button"
+                        className="co-vou-btn ghost"
+                        onClick={clearCode}
+                      >
+                        Batal
+                      </button>
                     </div>
                   ) : null}
 
                   <div className="co-chips">
-                    {VOUCHERS.map((v) => (
-                      <button
-                        type="button"
-                        key={v.code}
-                        className={
-                          "co-chip" + (applied === v.code ? " on" : "")
-                        }
-                        onClick={() => useCode(v.code)}
-                        title={v.desc + ", min. " + money(v.min)}
-                      >
-                        <strong>{v.code}</strong>
-                        <small>{v.label}</small>
-                      </button>
-                    ))}
+                    {POINT_VOUCHERS.map((v) => {
+                      const enough = points >= v.cost;
+                      return (
+                        <button
+                          type="button"
+                          key={v.code}
+                          className={
+                            "co-chip" +
+                            (applied === v.code ? " on" : "") +
+                            (enough ? "" : " off")
+                          }
+                          onClick={() => redeem(v)}
+                          title={
+                            v.desc + (v.min ? ", min. belanja " + money(v.min) : "")
+                          }
+                        >
+                          <strong>{v.label}</strong>
+                          <small>{v.cost} poin</small>
+                        </button>
+                      );
+                    })}
                   </div>
+                  <small className="co-poin-note">
+                    Poin didapat dari pesanan yang udah Selesai. Tiap Rp 1.000 = 1
+                    poin.
+                  </small>
                 </div>
 
                 <div className="co-lines">

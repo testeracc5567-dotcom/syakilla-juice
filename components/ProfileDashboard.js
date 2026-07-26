@@ -28,7 +28,16 @@ const TIERS = [
   { name: "Gold", min: 150, color: "#f4a825" },
 ];
 
-const STEPS = ["Diproses", "Dikirim", "Selesai"];
+const STEPS = ["Dibayar", "Diproses", "Dikirim", "Selesai"];
+
+// Pesanan dianggap dibayar kalau statusnya Dibayar / Dikirim / Selesai.
+// COD baru dianggap dibayar kalau udah Selesai.
+function isPaid(o) {
+  const s = String((o && o.status) || "").toLowerCase();
+  if (s.includes("batal") || s.includes("belum")) return false;
+  if (o && o.method === "cod") return s.includes("selesai");
+  return s.includes("dibayar") || s.includes("dikirim") || s.includes("selesai");
+}
 
 function dateStr(ts) {
   try {
@@ -44,9 +53,12 @@ function dateStr(ts) {
 
 function stepIndex(status) {
   const s = String(status || "").toLowerCase();
-  if (s.includes("selesai") || s.includes("berhasil")) return 2;
-  if (s.includes("dikirim")) return 1;
-  return 0;
+  if (s.includes("selesai") || s.includes("berhasil")) return 3;
+  if (s.includes("dikirim")) return 2;
+  if (s.includes("diproses")) return 1;
+  if (s.includes("belum")) return -1;
+  if (s.includes("dibayar")) return 0;
+  return 1;
 }
 
 // Titik-titik progres status pesanan. Kalau dibatalkan, tampilkan label khusus.
@@ -142,6 +154,12 @@ export default function ProfileDashboard() {
   const markDone = (roomId, orderId) => {
     updateOrderStatus(roomId, orderId, "Selesai");
     showToast("Pesanan ditandai selesai.");
+  };
+
+  // Admin: ubah status pesanan ke apa aja (termasuk Dibatalkan).
+  const setOrderStatus = (roomId, orderId, status) => {
+    updateOrderStatus(roomId, orderId, status);
+    showToast("Status pesanan diubah jadi " + status + ".");
   };
 
   // Riwayat poin (buyer): tiap pesanan selesai kasih poin.
@@ -457,6 +475,53 @@ export default function ProfileDashboard() {
                           </span>
                           <span className="tx-date">{dateStr(o.ts)}</span>
                         </div>
+                        <div className="ord-pay">
+                          <span
+                            className={
+                              "ord-pay-tag" + (isPaid(o) ? " ok" : " wait")
+                            }
+                          >
+                            {isPaid(o) ? "Sudah Dibayar" : "Belum Dibayar"}
+                          </span>
+                          <small>
+                            {o.method === "cod"
+                              ? "COD, dibayar pas pesanan diterima"
+                              : "Cek bukti transfer di chat pembeli"}
+                          </small>
+                        </div>
+
+                        <div className="ord-sts">
+                          <span className="ord-sts-h">
+                            Klik buat ubah status:
+                          </span>
+                          <div className="ord-sts-btns">
+                            {STEPS.map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                className={
+                                  "ord-sts-btn" +
+                                  (String(o.status || "") === s ? " on" : "")
+                                }
+                                onClick={() => setOrderStatus(roomId, o.id, s)}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              className={
+                                "ord-sts-btn cancel" + (cancelled ? " on" : "")
+                              }
+                              onClick={() =>
+                                setOrderStatus(roomId, o.id, "Dibatalkan")
+                              }
+                            >
+                              Dibatalkan
+                            </button>
+                          </div>
+                        </div>
+
                         <div className="dash-order-actions">
                           <button
                             className="dash-chat-btn"

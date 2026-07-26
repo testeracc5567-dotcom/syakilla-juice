@@ -5764,3 +5764,161 @@ footer {
     height: min(74vh, 520px);
   }
 }
+
+/* ====== CHAT PEMBELI FULL SCREEN (bukan panel kecil lagi) ====== */
+.wa {
+  position: fixed;
+  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 0;
+  z-index: 320;
+}
+.wa-head { padding: 12px 18px; }
+.wa-body { padding: 18px calc(50% - 430px) 26px; }
+.wa-input { padding: 12px calc(50% - 430px); }
+.wa-b { max-width: 62%; }
+.wa-note { max-width: 520px; }
+@media (max-width: 980px) {
+  .wa-body { padding: 16px 14px 22px; }
+  .wa-input { padding: 10px 12px; }
+  .wa-b { max-width: 82%; }
+}
+
+/* ====== STATUS PESANAN DI ADMIN (bisa diklik) ====== */
+.ord-pay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.ord-pay-tag {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+.ord-pay-tag.ok {
+  background: rgba(47, 161, 90, 0.14);
+  color: var(--green-deep);
+}
+.ord-pay-tag.wait {
+  background: rgba(244, 168, 37, 0.18);
+  color: #96620a;
+}
+.ord-pay small { font-size: 11.5px; color: var(--muted); }
+.ord-sts {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+.ord-sts-h {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.ord-sts-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ord-sts-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.ord-sts-btn:hover { border-color: var(--green); color: var(--green-deep); }
+.ord-sts-btn.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.ord-sts-btn.cancel {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.35);
+  margin-left: auto;
+}
+.ord-sts-btn.cancel:hover {
+  background: rgba(192, 57, 43, 0.08);
+  border-color: #c0392b;
+  color: #c0392b;
+}
+.ord-sts-btn.cancel.on {
+  background: #c0392b;
+  border-color: #c0392b;
+  color: #fff;
+}
+
+/* ====== TUKAR POIN + DETAIL PEMBAYARAN DI CHECKOUT ====== */
+.co-poin {
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(244, 168, 37, 0.14);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.co-poin strong { color: #96620a; }
+.co-poin-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.co-chip.off { opacity: 0.55; }
+.co-pay {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fbfdfb;
+}
+.co-pay-h {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--green-deep);
+  margin-bottom: 8px;
+}
+.co-pay-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.co-pay-row:last-of-type { border-bottom: 0; }
+.co-pay-row span { font-size: 12px; color: var(--muted); min-width: 62px; }
+.co-pay-row strong { font-size: 15px; letter-spacing: 0.03em; color: var(--text); }
+.co-pay-row small { font-size: 11.5px; color: var(--muted); }
+.co-pay-empty { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.co-pay-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.co-qris {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
