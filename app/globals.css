@@ -6208,3 +6208,50 @@ footer {
   font-weight: 700;
   color: var(--muted);
 }
+
+/* ====== JUMLAH STOK DI HALAMAN PEMBELI ====== */
+.card-stock {
+  margin-top: 8px;
+}
+.cs-in,
+.cs-out {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.cs-in {
+  background: rgba(47, 161, 90, 0.14);
+  color: var(--green-deep);
+}
+.cs-out {
+  background: rgba(192, 57, 43, 0.12);
+  color: #a5301f;
+}
+.card.card-out .card-photo {
+  filter: grayscale(0.7);
+  opacity: 0.8;
+}
+.quick button:disabled {
+  background: #9aa0a6;
+  cursor: not-allowed;
+}
+.pm-stok {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green-deep);
+}
+.pm-stok.out {
+  color: #a5301f;
+}
+.pm-cta .btn-primary:disabled {
+  background: #9aa0a6;
+  border-color: #9aa0a6;
+  cursor: not-allowed;
+}
+.pm-stepper button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

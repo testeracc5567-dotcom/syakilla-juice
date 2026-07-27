@@ -74,6 +74,8 @@ export default function ProductModal() {
   const purchased = user ? getPurchasedProductIds(user.email) : new Set();
   const eligible = !!user && purchased.has(p.id);
   const already = !!user && hasReviewed(p.id, user.email);
+  const stock = Number(p.stock || 0);
+  const out = stock <= 0;
 
   const submit = (e) => {
     e.preventDefault();
@@ -93,7 +95,9 @@ export default function ProductModal() {
   };
 
   const addToCart = () => {
-    for (let i = 0; i < qty; i++) add(p.id);
+    if (out) return;
+    const n = Math.min(qty, stock);
+    for (let i = 0; i < n; i++) add(p.id);
     closeProduct();
   };
 
@@ -128,6 +132,12 @@ export default function ProductModal() {
               </span>
               <span className="pm-rate-sep">·</span>
               <span className="pm-sold">{sold} terjual</span>
+              <span className="pm-rate-sep">{"\u00b7"}</span>
+              {out ? (
+                <span className="pm-stok out">Stok habis</span>
+              ) : (
+                <span className="pm-stok">Stok {stock}</span>
+              )}
             </div>
             <div className="pm-price-lg">{money(p.price)}</div>
 
@@ -145,7 +155,8 @@ export default function ProductModal() {
                 <span>{qty}</span>
                 <button
                   type="button"
-                  onClick={() => setQty((q) => q + 1)}
+                  onClick={() => setQty((q) => Math.min(Math.max(stock, 1), q + 1))}
+                  disabled={out || qty >= stock}
                   aria-label="Tambah"
                 >
                   +
@@ -154,8 +165,9 @@ export default function ProductModal() {
             </div>
 
             <div className="pm-cta">
-              <button className="btn-primary" onClick={addToCart}>
-                <Icon name="cart" /> Masukkan Keranjang
+              <button className="btn-primary" onClick={addToCart} disabled={out}>
+                <Icon name="cart" />{" "}
+                {out ? "Stok Habis" : "Masukkan Keranjang"}
               </button>
             </div>
           </div>

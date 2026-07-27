@@ -21,19 +21,22 @@ export default function ProductCard({ product: p }) {
     return () => window.removeEventListener("syk-reviews-update", load);
   }, [p.id]);
 
-  // Klik tombol tambah: jangan buka modal detail.
+  // Klik tombol tambah: jangan buka modal detail. Stok habis = gak bisa ditambah.
   const addToCart = (e) => {
     e.stopPropagation();
+    if (Number(p.stock || 0) <= 0) return;
     add(p.id);
   };
 
   // Sebelum mount pakai nilai bawaan biar sama dengan server (hindari hydration error).
   const value = mounted && rating.count ? rating.avg : p.stars;
   const count = mounted ? rating.count : 0;
+  const stock = Number(p.stock || 0);
+  const out = stock <= 0;
 
   return (
     <div
-      className="card card-click"
+      className={"card card-click" + (out ? " card-out" : "")}
       role="button"
       tabIndex={0}
       onClick={() => openProduct(p)}
@@ -50,8 +53,8 @@ export default function ProductCard({ product: p }) {
           className="card-photo"
         />
         <div className="quick">
-          <button onClick={addToCart}>
-            Tambah {"\u2014"} {money(p.price)}
+          <button onClick={addToCart} disabled={out}>
+            {out ? "Stok Habis" : "Tambah " + "\u2014" + " " + money(p.price)}
           </button>
         </div>
       </div>
@@ -66,6 +69,13 @@ export default function ProductCard({ product: p }) {
             <b>{Number(value).toFixed(1)}</b>
             <small>({count})</small>
           </span>
+        </div>
+        <div className="card-stock">
+          {out ? (
+            <span className="cs-out">Stok habis</span>
+          ) : (
+            <span className="cs-in">Stok {stock}</span>
+          )}
         </div>
       </div>
     </div>
