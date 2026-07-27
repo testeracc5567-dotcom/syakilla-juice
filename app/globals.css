@@ -6288,3 +6288,37 @@ footer {
   height: 1px;
   background: var(--border);
 }
+
+/* ====== RATING DARI PESANAN SELESAI ====== */
+.dash-rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.dash-rate-h {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.dash-rate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 168, 37, 0.55);
+  background: rgba(244, 168, 37, 0.14);
+  color: #96620a;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s;
+}
+.dash-rate-btn:hover {
+  background: rgba(244, 168, 37, 0.26);
+  transform: translateY(-1px);
+}

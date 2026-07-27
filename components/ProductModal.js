@@ -36,7 +36,7 @@ function dateStr(ts) {
 }
 
 export default function ProductModal() {
-  const { product, closeProduct, openAuth } = useUI();
+  const { product, closeProduct, openAuth, showToast } = useUI();
   const { add } = useStore();
   const { user } = useAuth();
   const [, setTick] = useState(0);
@@ -45,6 +45,7 @@ export default function ProductModal() {
   const [stars, setStars] = useState(5);
   const [hover, setHover] = useState(0);
   const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     const h = () => setTick((t) => t + 1);
@@ -57,13 +58,26 @@ export default function ProductModal() {
   }, []);
 
   const pid = product && product.id;
+  const uemail = user && user.email ? user.email : "";
   useEffect(() => {
-    setTab("desc");
+    // Kalau produk ini pernah dibeli dan belum diulas, langsung buka tab Ulasan.
+    let canRate = false;
+    if (pid && uemail) {
+      try {
+        canRate =
+          getPurchasedProductIds(uemail).has(pid) &&
+          !hasReviewed(pid, uemail);
+      } catch (e) {
+        canRate = false;
+      }
+    }
+    setTab(canRate ? "reviews" : "desc");
     setQty(1);
     setStars(5);
     setHover(0);
     setText("");
-  }, [pid]);
+    setSending(false);
+  }, [pid, uemail]);
 
   if (!product) return null;
   const p = product;
@@ -77,12 +91,13 @@ export default function ProductModal() {
   const stock = Number(p.stock || 0);
   const out = stock <= 0;
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (!eligible || already) return;
+    if (!eligible || already || sending) return;
     const t = text.trim();
     if (!t) return;
-    addReview(p.id, {
+    setSending(true);
+    const out2 = await addReview(p.id, {
       id: Date.now() + "_" + Math.random().toString(36).slice(2, 6),
       name: user.name,
       email: user.email,
@@ -90,6 +105,12 @@ export default function ProductModal() {
       text: t,
       ts: Date.now(),
     });
+    setSending(false);
+    if (out2 && out2.error) {
+      if (showToast) showToast(out2.error);
+      return;
+    }
+    if (showToast) showToast("Makasih! Ulasan kamu udah tayang.");
     setText("");
     setStars(5);
   };
@@ -260,9 +281,9 @@ export default function ProductModal() {
                   <button
                     type="submit"
                     className="btn-primary"
-                    disabled={!text.trim()}
+                    disabled={!text.trim() || sending}
                   >
-                    Kirim Ulasan
+                    {sending ? "Mengirim..." : "Kirim Ulasan"}
                   </button>
                 </form>
               ) : (

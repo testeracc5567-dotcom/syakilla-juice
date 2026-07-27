@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
+import { useProducts } from "@/context/ProductsContext";
 import {
   getCustomerOrders,
   getAllIncomingOrders,
@@ -136,10 +137,12 @@ export default function ProfileDashboard() {
     closeDashboard,
     openProfile,
     openChat,
+    openProduct,
     showToast,
   } = useUI();
   const { user, isAdmin, logout } = useAuth();
   const { setActiveRoom } = useChat();
+  const { products } = useProducts();
   const [, setTick] = useState(0);
   const [loyTab, setLoyTab] = useState("riwayat");
   const [payOrder, setPayOrder] = useState(null);
@@ -219,6 +222,17 @@ export default function ProfileDashboard() {
       showToast(e.message || "Gagal buka pembayaran.");
       setPayBusy(false);
     }
+  };
+
+  // Buka detail produk buat kasih rating setelah pesanan selesai.
+  const rateItem = (item) => {
+    const p = (products || []).find((x) => String(x.id) === String(item.id));
+    if (!p) {
+      showToast("Produknya udah gak ada di menu.");
+      return;
+    }
+    closeDashboard();
+    openProduct(p);
   };
 
   if (!dashboardOpen || !user) return null;
@@ -661,6 +675,23 @@ export default function ProfileDashboard() {
                           <div className="dash-earn-note">
                             Dapat +{Math.floor((o.total || 0) / 1000)} poin
                             setelah pesanan selesai
+                          </div>
+                        ) : null}
+                        {done ? (
+                          <div className="dash-rate-row">
+                            <span className="dash-rate-h">
+                              Udah selesai! Kasih rating minumannya:
+                            </span>
+                            {(o.items || []).map((it) => (
+                              <button
+                                type="button"
+                                key={it.id}
+                                className="dash-rate-btn"
+                                onClick={() => rateItem(it)}
+                              >
+                                {"\u2605"} Nilai {it.name}
+                              </button>
+                            ))}
                           </div>
                         ) : null}
                         <div className="dash-order-actions">

@@ -19,6 +19,7 @@ import TransaksiModal from "@/components/TransaksiModal";
 import LoyaltyModal from "@/components/LoyaltyModal";
 import ProfileDashboard from "@/components/ProfileDashboard";
 import OrdersSync from "@/components/OrdersSync";
+import ReviewsSync from "@/components/ReviewsSync";
 
 export const metadata = {
   title: "Syakilla Juice — Segar Tiap Hari",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
           <AppProviders>
             <ScrollAnimator />
             <OrdersSync />
+            <ReviewsSync />
             <Header />
             <main>{children}</main>
             <AIBanner />
