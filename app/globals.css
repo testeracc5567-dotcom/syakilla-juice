@@ -6255,3 +6255,36 @@ footer {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ====== PEMBAYARAN ONLINE (MIDTRANS SNAP) ====== */
+.dpay-online {
+  margin-bottom: 8px;
+}
+.dpay-online:disabled {
+  background: #9aa0a6;
+  cursor: not-allowed;
+}
+.dpay-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.dpay-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 4px 0 12px;
+}
+.dpay-or::before,
+.dpay-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}

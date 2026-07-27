@@ -13,6 +13,7 @@ import {
 import { getReviewCountByEmail } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
+import { loadSnap } from "@/lib/snap";
 import { Icon } from "./Icons";
 import KelolaProduk from "./KelolaProduk";
 
@@ -143,6 +144,7 @@ export default function ProfileDashboard() {
   const [loyTab, setLoyTab] = useState("riwayat");
   const [payOrder, setPayOrder] = useState(null);
   const [payLeft, setPayLeft] = useState(0);
+  const [payBusy, setPayBusy] = useState(false);
 
   useEffect(() => {
     const h = () => setTick((t) => t + 1);
@@ -173,6 +175,51 @@ export default function ProfileDashboard() {
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
   }, [payOrder, user]);
+
+  // Bayar online lewat Midtrans Snap.
+  const payOnline = async () => {
+    if (!payOrder || payBusy) return;
+    setPayBusy(true);
+    try {
+      const res = await fetch("/api/pay/snap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: payOrder.id,
+          roomId: user && user.email ? user.email : "",
+        }),
+      });
+      const out = await res.json();
+      if (!out.ok || !out.token) {
+        throw new Error(out.error || "Gagal buka pembayaran.");
+      }
+      const snap = await loadSnap(out.clientKey);
+      if (!snap) {
+        if (out.redirect_url) {
+          window.open(out.redirect_url, "_blank");
+          setPayBusy(false);
+          return;
+        }
+        throw new Error("Gagal memuat halaman pembayaran.");
+      }
+      setPayBusy(false);
+      snap.pay(out.token, {
+        onSuccess: () => {
+          showToast("Pembayaran berhasil! Status pesanan otomatis diperbarui.");
+          setPayOrder(null);
+        },
+        onPending: () => {
+          showToast("Pembayaran belum masuk. Status berubah sendiri nanti.");
+          setPayOrder(null);
+        },
+        onError: () => showToast("Pembayaran gagal, coba lagi ya."),
+        onClose: () => {},
+      });
+    } catch (e) {
+      showToast(e.message || "Gagal buka pembayaran.");
+      setPayBusy(false);
+    }
+  };
 
   if (!dashboardOpen || !user) return null;
 
@@ -270,6 +317,21 @@ export default function ProfileDashboard() {
                 </div>
               ) : (
                 <>
+                  <button
+                    type="button"
+                    className="dpay-btn dpay-online"
+                    onClick={payOnline}
+                    disabled={payBusy}
+                  >
+                    <Icon name="card" />{" "}
+                    {payBusy ? "Membuka pembayaran..." : "Bayar Online"}
+                  </button>
+                  <div className="dpay-hint">
+                    QRIS, GoPay, ShopeePay, Virtual Account, kartu, minimarket.
+                    Status pesanan berubah sendiri begitu pembayaran masuk.
+                  </div>
+                  <div className="dpay-or">atau bayar manual</div>
+
                   {payOrder.method === "qris" ? (
                     <div className="co-pay">
                       <div className="co-pay-h">Scan QRIS ini</div>
