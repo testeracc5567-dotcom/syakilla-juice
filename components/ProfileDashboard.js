@@ -252,6 +252,117 @@ export default function ProfileDashboard() {
   const reviewCount = getReviewCountByEmail(user.email);
   const incoming = isAdmin ? getAllIncomingOrders() : [];
 
+  // Ringkasan penjualan buat Dashboard admin.
+  const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+  const adminStat = (() => {
+    if (!isAdmin) return null;
+    const rows = (incoming || []).map((x) => {
+      const o = x.order || {};
+      return Object.assign({}, o, {
+        ts: Number(o.ts) || Number(x.ts) || 0,
+        buyer: (x.customer && x.customer.name) || x.roomId || "Pembeli",
+      });
+    });
+    const paid = rows.filter((o) => isPaid(o));
+    const qtyOf = (o) =>
+      (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0);
+    const revenue = paid.reduce((s, o) => s + (Number(o.total) || 0), 0);
+    const sold = paid.reduce((s, o) => s + qtyOf(o), 0);
+    const avg = paid.length ? Math.round(revenue / paid.length) : 0;
+
+    const low = (o) => String(o.status || "").toLowerCase();
+    const statusList = [
+      {
+        label: "Menunggu bayar",
+        tone: "wait",
+        n: rows.filter(
+          (o) => low(o).includes("belum") || low(o).includes("menunggu"),
+        ).length,
+      },
+      {
+        label: "Dibayar",
+        tone: "pay",
+        n: rows.filter((o) => low(o) === "dibayar").length,
+      },
+      {
+        label: "Diproses",
+        tone: "proc",
+        n: rows.filter((o) => low(o) === "diproses").length,
+      },
+      {
+        label: "Dikirim",
+        tone: "ship",
+        n: rows.filter((o) => low(o) === "dikirim").length,
+      },
+      {
+        label: "Selesai",
+        tone: "done",
+        n: rows.filter((o) => low(o) === "selesai").length,
+      },
+      {
+        label: "Dibatalkan",
+        tone: "cancel",
+        n: rows.filter((o) => low(o).includes("batal")).length,
+      },
+    ];
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const start = d.getTime();
+      const end = start + 86400000;
+      const isi = paid.filter((o) => o.ts >= start && o.ts < end);
+      days.push({
+        label: HARI[d.getDay()],
+        n: isi.length,
+        sum: isi.reduce((s, o) => s + (Number(o.total) || 0), 0),
+      });
+    }
+    let maxSum = 1;
+    days.forEach((d) => {
+      if (d.sum > maxSum) maxSum = d.sum;
+    });
+
+    const map = {};
+    paid.forEach((o) => {
+      (o.items || []).forEach((it) => {
+        const k = String(it.id);
+        if (!map[k]) map[k] = { id: k, name: it.name || "Produk", qty: 0 };
+        map[k].qty += Number(it.qty) || 0;
+      });
+    });
+    const top = Object.keys(map)
+      .map((k) => map[k])
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5)
+      .map((r) => {
+        const p = (products || []).find((x) => String(x.id) === r.id) || {};
+        return Object.assign({}, r, {
+          cat: p.cat || "-",
+          price: Number(p.price) || 0,
+        });
+      });
+
+    const latest = rows
+      .slice()
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+      .slice(0, 6);
+
+    return {
+      revenue,
+      total: rows.length,
+      sold,
+      avg,
+      statusList,
+      days,
+      maxSum,
+      top,
+      latest,
+    };
+  })();
+
   let tier = TIERS[0];
   TIERS.forEach((t) => {
     if (points >= t.min) tier = t;
@@ -614,31 +725,182 @@ export default function ProfileDashboard() {
                 </>
               ) : (
                 <>
-                  <div className="rv-note">
-                    Pantau pesanan pembeli lewat menu{" "}
-                    <strong>Pesanan Masuk</strong>, dan balas chat mereka lewat
-                    tombol chat di header.
+                  <div className="adm-head">
+                    <div>
+                      <span className="adm-eyebrow">Dashboard</span>
+                      <h3 className="serif adm-title">Ringkasan Penjualan</h3>
+                    </div>
+                    <div className="adm-head-act">
+                      <button
+                        className="dash-chat-btn"
+                        onClick={() => go("masuk")}
+                      >
+                        <Icon name="inbox" /> Pesanan Masuk
+                      </button>
+                      <button
+                        className="dash-chat-btn"
+                        onClick={() => go("produk")}
+                      >
+                        <Icon name="store" /> Kelola Produk
+                      </button>
+                    </div>
                   </div>
-                  <div className="dash-stats">
-                    <div className="dash-stat">
-                      <Icon name="inbox" />
-                      <div>
-                        <b>{incoming.length}</b>
-                        <small>Total Pesanan Masuk</small>
-                      </div>
+
+                  <div className="adm-kpi">
+                    <div className="adm-kpi-box">
+                      <small>Pendapatan</small>
+                      <b>{money(adminStat.revenue)}</b>
                     </div>
-                    <div className="dash-stat">
-                      <Icon name="wallet" />
-                      <div>
-                        <b>
-                          {
-                            incoming.filter((x) => isOrderDone(x.order.status))
-                              .length
-                          }
-                        </b>
-                        <small>Pesanan Selesai</small>
-                      </div>
+                    <div className="adm-kpi-box">
+                      <small>Total pesanan</small>
+                      <b>{adminStat.total}</b>
                     </div>
+                    <div className="adm-kpi-box">
+                      <small>Item terjual</small>
+                      <b>{adminStat.sold}</b>
+                    </div>
+                    <div className="adm-kpi-box">
+                      <small>Rata-rata / pesanan</small>
+                      <b>{money(adminStat.avg)}</b>
+                    </div>
+                  </div>
+
+                  <div className="adm-grid">
+                    <div className="adm-card">
+                      <h4>Traffic penjualan (7 hari)</h4>
+                      <div className="adm-chart">
+                        {adminStat.days.map((d, i) => (
+                          <div className="adm-bar-wrap" key={i}>
+                            <span className="adm-bar-n">{d.n}</span>
+                            <div
+                              className="adm-bar"
+                              title={money(d.sum)}
+                              style={{
+                                height:
+                                  Math.max(
+                                    4,
+                                    Math.round((d.sum / adminStat.maxSum) * 118),
+                                  ) + "px",
+                              }}
+                            />
+                            <span className="adm-bar-lbl">{d.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="adm-note">
+                        Tinggi batang = pendapatan, angka di atas = jumlah
+                        pesanan hari itu.
+                      </p>
+                    </div>
+
+                    <div className="adm-card">
+                      <h4>Status pesanan</h4>
+                      <ul className="adm-status">
+                        {adminStat.statusList.map((s, i) => (
+                          <li key={i}>
+                            <span className={"adm-pill " + s.tone}>
+                              {s.label}
+                            </span>
+                            <b>{s.n}</b>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="adm-card">
+                    <h4>Produk terlaris</h4>
+                    {adminStat.top.length ? (
+                      <div className="adm-table-wrap">
+                        <table className="adm-table">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Produk</th>
+                              <th>Kategori</th>
+                              <th>Harga</th>
+                              <th>Terjual</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {adminStat.top.map((r, i) => (
+                              <tr key={r.id}>
+                                <td>{i + 1}</td>
+                                <td>
+                                  <strong>{r.name}</strong>
+                                </td>
+                                <td>{r.cat}</td>
+                                <td>{money(r.price)}</td>
+                                <td>{r.qty}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="adm-empty">Belum ada penjualan.</p>
+                    )}
+                  </div>
+
+                  <div className="adm-card">
+                    <h4>Pesanan terbaru</h4>
+                    {adminStat.latest.length ? (
+                      <div className="adm-table-wrap">
+                        <table className="adm-table">
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Pembeli</th>
+                              <th>Tanggal</th>
+                              <th>Item</th>
+                              <th>Total</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {adminStat.latest.map((o) => (
+                              <tr key={o.id}>
+                                <td>{"#" + o.id}</td>
+                                <td>{o.buyer}</td>
+                                <td>
+                                  {o.ts
+                                    ? new Date(o.ts).toLocaleDateString("id-ID")
+                                    : "-"}
+                                </td>
+                                <td>
+                                  {(o.items || []).reduce(
+                                    (s, it) => s + (Number(it.qty) || 0),
+                                    0,
+                                  )}
+                                </td>
+                                <td>{money(o.total || 0)}</td>
+                                <td>
+                                  <span
+                                    className={
+                                      "adm-pill " +
+                                      (isOrderCancelled(o.status)
+                                        ? "cancel"
+                                        : isOrderDone(o.status)
+                                          ? "done"
+                                          : "proc")
+                                    }
+                                  >
+                                    {o.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="adm-empty">Belum ada pesanan masuk.</p>
+                    )}
+                  </div>
+
+                  <div className="rv-note">
+                    Balas chat pembeli lewat ikon chat di header. Ubah status
+                    pesanan di menu <strong>Pesanan Masuk</strong>.
                   </div>
                 </>
               )}
