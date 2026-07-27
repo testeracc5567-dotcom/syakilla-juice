@@ -11,7 +11,7 @@ import {
   isOrderCancelled,
   updateOrderStatus,
 } from "@/lib/orders";
-import { getReviewCountByEmail } from "@/lib/reviews";
+import { getReviewCountByEmail, hasReviewed } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
 import { loadSnap } from "@/lib/snap";
@@ -222,6 +222,13 @@ export default function ProfileDashboard() {
       showToast(e.message || "Gagal buka pembayaran.");
       setPayBusy(false);
     }
+  };
+
+  // Ambil 1 produk dari pesanan yang belum diulas (1 pesanan = 1 ulasan).
+  const unreviewedItem = (o) => {
+    const mail = user && user.email ? user.email : "";
+    if (!mail) return null;
+    return (o.items || []).find((it) => !hasReviewed(it.id, mail)) || null;
   };
 
   // Buka detail produk buat kasih rating setelah pesanan selesai.
@@ -677,23 +684,6 @@ export default function ProfileDashboard() {
                             setelah pesanan selesai
                           </div>
                         ) : null}
-                        {done ? (
-                          <div className="dash-rate-row">
-                            <span className="dash-rate-h">
-                              Udah selesai! Kasih rating minumannya:
-                            </span>
-                            {(o.items || []).map((it) => (
-                              <button
-                                type="button"
-                                key={it.id}
-                                className="dash-rate-btn"
-                                onClick={() => rateItem(it)}
-                              >
-                                {"\u2605"} Nilai {it.name}
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
                         <div className="dash-order-actions">
                           <button className="dash-chat-btn" onClick={chatAdmin}>
                             <Icon name="chat" /> Chat Admin
@@ -713,6 +703,21 @@ export default function ProfileDashboard() {
                             >
                               <Icon name="close" /> Batalkan Pesanan
                             </button>
+                          ) : null}
+                          {done ? (
+                            unreviewedItem(o) ? (
+                              <button
+                                type="button"
+                                className="dash-rate-btn"
+                                onClick={() => rateItem(unreviewedItem(o))}
+                              >
+                                {"\u2605"} Beri Ulasan
+                              </button>
+                            ) : (
+                              <span className="dash-rated">
+                                {"\u2605"} Udah diulas
+                              </span>
+                            )
                           ) : null}
                         </div>
                       </div>

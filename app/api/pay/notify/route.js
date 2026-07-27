@@ -1,4 +1,4 @@
-﻿// Webhook Midtrans. Signature diverifikasi dulu, jadi gak bisa dipalsuin.
+// Webhook Midtrans. Signature diverifikasi dulu, jadi gak bisa dipalsuin.
 // Set di Midtrans: Settings > Configuration > Payment Notification URL
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
@@ -50,14 +50,16 @@ export async function POST(req) {
       now.includes("selesai");
     if (jalan) return NextResponse.json({ ok: true, kept: true });
 
-    const patch = { "order.status": status };
+    // Pembayaran online masuk = langsung diproses sistem, tanpa nunggu admin.
+    const finalStatus = status === "Dibayar" ? "Diproses" : status;
+    const patch = { "order.status": finalStatus };
     if (status === "Dibayar") {
       patch["order.paidAt"] = Date.now();
       patch["order.payChannel"] = String(body.payment_type || "");
       patch["order.payRef"] = String(body.transaction_id || "");
     }
     await ref.update(patch);
-    return NextResponse.json({ ok: true, status });
+    return NextResponse.json({ ok: true, status: finalStatus });
   } catch (e) {
     return NextResponse.json(
       { error: e.message || "Gagal proses notifikasi." },

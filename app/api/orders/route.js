@@ -1,4 +1,4 @@
-﻿// API pesanan (server, Firestore) - biar pesanan pembeli MASUK ke admin
+// API pesanan (server, Firestore) - biar pesanan pembeli MASUK ke admin
 // walaupun beda browser / beda HP. Admin baca semua, pembeli baca punya sendiri.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
@@ -27,6 +27,29 @@ function bucketize(docs) {
     data[k].orders.sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
   });
   return data;
+}
+
+// Kurangi (dir = -1) atau balikin (dir = 1) stok produk sesuai isi pesanan.
+async function bumpStock(adb, items, dir) {
+  const list = Array.isArray(items) ? items : [];
+  for (let i = 0; i < list.length; i++) {
+    const it = list[i] || {};
+    const pid = String(it.id || "");
+    const qty = Number(it.qty) || 0;
+    if (!pid || qty <= 0) continue;
+    try {
+      const pref = adb.collection("products").doc(pid);
+      await adb.runTransaction(async (trx) => {
+        const snap = await trx.get(pref);
+        if (!snap.exists) return;
+        const cur = Number((snap.data() || {}).stock) || 0;
+        const next = dir < 0 ? Math.max(0, cur - qty) : cur + qty;
+        trx.update(pref, { stock: next, updatedAt: Date.now() });
+      });
+    } catch (e) {
+      // Kalau stok gagal diupdate, pesanan tetap kesimpan.
+    }
+  }
 }
 
 async function getSessionInfo() {
@@ -75,17 +98,24 @@ export async function POST(req) {
       return NextResponse.json({ error: "Pesanan tidak valid." }, { status: 400 });
     }
     const adb = getAdminDb();
-    await adb
-      .collection(COL)
-      .doc(String(order.id))
-      .set({
-        roomId,
-        customer: body.customer || {},
-        order: Object.assign({}, order, {
-          status: order.status || "Diproses",
-        }),
-        ts: Number(order.ts) || Date.now(),
-      });
+    const ref = adb.collection(COL).doc(String(order.id));
+    const prev = await ref.get();
+    const prevOrder = prev.exists ? (prev.data() || {}).order || {} : {};
+    const stockDone = !!prevOrder.stockApplied;
+
+    await ref.set({
+      roomId,
+      customer: body.customer || {},
+      order: Object.assign({}, order, {
+        status: order.status || "Diproses",
+        stockApplied: true,
+      }),
+      ts: Number(order.ts) || Date.now(),
+    });
+
+    // Stok langsung berkurang begitu pesanan masuk (sekali saja).
+    if (!stockDone) await bumpStock(adb, order.items, -1);
+
     return NextResponse.json({ ok: true, id: order.id });
   } catch (e) {
     return NextResponse.json(
@@ -118,7 +148,15 @@ export async function PATCH(req) {
     if (!isAdmin && !mine) {
       return NextResponse.json({ error: "Tidak diizinkan." }, { status: 403 });
     }
-    await ref.update({ "order.status": status });
+    const cur = (doc.data() || {}).order || {};
+    const cancel = status.toLowerCase().includes("batal");
+    const patch = { "order.status": status };
+    if (cancel && cur.stockApplied) patch["order.stockApplied"] = false;
+    await ref.update(patch);
+
+    // Pesanan dibatalkan: stok dibalikin lagi.
+    if (cancel && cur.stockApplied) await bumpStock(adb, cur.items, 1);
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

@@ -14,6 +14,7 @@ import {
   updateOrderStatus,
   refreshOrders,
 } from "@/lib/orders";
+import { loadSnap } from "@/lib/snap";
 import { Icon } from "./Icons";
 
 const METHODS = [
@@ -66,7 +67,7 @@ function mmss(sec) {
 }
 
 export default function CheckoutModal() {
-  const { checkoutOpen, closeCheckout } = useUI();
+  const { checkoutOpen, closeCheckout, showToast } = useUI();
   const { cart, subtotal, P, clear, changeQty } = useStore();
   const { myRoom } = useChat();
   const { user } = useAuth();
@@ -98,6 +99,8 @@ export default function CheckoutModal() {
   const [expiresAt, setExpiresAt] = useState(0);
   const [left, setLeft] = useState(0);
   const [payStatus, setPayStatus] = useState("");
+  const [payBusy, setPayBusy] = useState(false);
+  const [payClicked, setPayClicked] = useState(false);
 
   // Selama nunggu bayar: hitung mundur + pantau status pesanan realtime.
   useEffect(() => {
@@ -255,6 +258,47 @@ export default function CheckoutModal() {
     }, 2000);
   };
 
+  // Bayar online (Midtrans Snap). Pembayaran masuk otomatis lewat webhook,
+  // status pesanan langsung jadi Diproses tanpa konfirmasi admin.
+  const payOnline = async () => {
+    if (!orderId || payBusy) return;
+    setPayBusy(true);
+    try {
+      const res = await fetch("/api/pay/snap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, roomId: myRoom }),
+      });
+      const out = await res.json();
+      if (!out.ok || !out.token) {
+        throw new Error(out.error || "Gagal buka pembayaran.");
+      }
+      const snap = await loadSnap(out.clientKey);
+      if (!snap) {
+        if (out.redirect_url) window.open(out.redirect_url, "_blank");
+        return;
+      }
+      snap.pay(out.token, {
+        onSuccess: () => {
+          setPayStatus("checking");
+          refreshOrders(myRoom);
+        },
+        onPending: () => {
+          setPayStatus("checking");
+          refreshOrders(myRoom);
+        },
+        onError: () => {
+          if (showToast) showToast("Pembayaran gagal, coba lagi ya.");
+        },
+        onClose: () => {},
+      });
+    } catch (e) {
+      if (showToast) showToast(e.message || "Gagal buka pembayaran.");
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
   const close = () => {
     closeCheckout();
     setTimeout(() => {
@@ -264,6 +308,8 @@ export default function CheckoutModal() {
       setExpiresAt(0);
       setLeft(0);
       setPayStatus("");
+      setPayClicked(false);
+      setPayBusy(false);
       setDelivery("kirim");
       setApplied("");
       setCodeInput("");
@@ -303,10 +349,45 @@ export default function CheckoutModal() {
             <h2 className="serif">Menunggu Pembayaran</h2>
             <p>
               Pesanan <strong>#{orderId}</strong> udah masuk. Selesaikan
-              pembayaran{" "}
-              <strong>{money(receipt ? receipt.total : total)}</strong> sebelum
-              waktunya habis ya.
+              pembayaran sebelum waktunya habis ya.
             </p>
+
+            <div className="co-wait-amount">
+              <span className="cwa-h">Jumlah yang harus dibayar</span>
+              <strong className="cwa-total">
+                {money(receipt ? receipt.total : total)}
+              </strong>
+              {receipt ? (
+                <div className="cwa-rinci">
+                  <div className="cwa-row">
+                    <span>Total belanja</span>
+                    <span>{money(receipt.subtotal)}</span>
+                  </div>
+                  <div className="cwa-row">
+                    <span>
+                      {receipt.delivery === "kirim"
+                        ? "Ongkir"
+                        : "Ambil di tempat"}
+                    </span>
+                    <span>
+                      {receipt.shipping > 0
+                        ? money(receipt.shipping)
+                        : "Gratis"}
+                    </span>
+                  </div>
+                  {receipt.discount > 0 ? (
+                    <div className="cwa-row disc">
+                      <span>Voucher {receipt.voucher}</span>
+                      <span>{"-" + money(receipt.discount)}</span>
+                    </div>
+                  ) : null}
+                  <div className="cwa-row total">
+                    <span>Total bayar</span>
+                    <span>{money(receipt.total)}</span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
             {payStatus === "expired" ? (
               <div className="co-wait-bad">
@@ -319,6 +400,23 @@ export default function CheckoutModal() {
               </div>
             ) : (
               <>
+                <button
+                  type="button"
+                  className="co-wait-online"
+                  onClick={payOnline}
+                  disabled={payBusy}
+                >
+                  {payBusy
+                    ? "Membuka pembayaran..."
+                    : "Bayar Online " + money(receipt ? receipt.total : total)}
+                </button>
+                <p className="co-wait-hint">
+                  QRIS, GoPay, ShopeePay, Virtual Account, kartu. Pembayaran
+                  masuk otomatis dan pesanan langsung diproses sistem, tanpa
+                  konfirmasi admin.
+                </p>
+                <div className="co-wait-or">atau bayar manual</div>
+
                 {method === "qris" ? (
                   <div className="co-pay">
                     <div className="co-pay-h">Scan QRIS ini</div>
@@ -377,12 +475,15 @@ export default function CheckoutModal() {
                   <button
                     type="button"
                     className="co-wait-btn"
+                    disabled={payClicked}
                     onClick={() => {
+                      if (payClicked) return;
+                      setPayClicked(true);
                       updateOrderStatus(myRoom, orderId, "Menunggu Konfirmasi");
                       setPayStatus("checking");
                     }}
                   >
-                    Saya Sudah Bayar
+                    {payClicked ? "Menunggu Konfirmasi..." : "Saya Sudah Bayar (sekali aja)"}
                   </button>
                 )}
 
