@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Poppins:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
   --bg: #f2faf5;
@@ -6424,10 +6424,15 @@ footer {
   cursor: not-allowed;
 }
 .dash-rate-btn {
-  margin-left: auto;
+  margin-left: 0;
 }
 .dash-rated {
-  margin-left: auto;
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(47, 161, 90, 0.1);
   font-size: 12px;
   color: var(--green-deep);
   font-weight: 700;
