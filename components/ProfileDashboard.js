@@ -42,6 +42,31 @@ const TIERS = [
   { name: "Gold", min: 150, color: "#f4a825" },
 ];
 
+// Pilihan rentang waktu grafik penjualan di dashboard admin.
+const RANGES = [
+  { id: "hari", label: "Hari ini" },
+  { id: "3h", label: "3 hari" },
+  { id: "7h", label: "7 hari" },
+  { id: "14h", label: "14 hari" },
+  { id: "30h", label: "30 hari" },
+  { id: "all", label: "Lifetime" },
+];
+
+const BULAN = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Ags",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
 const STEPS = ["Dibayar", "Diproses", "Dikirim", "Selesai"];
 
 // Pesanan dianggap dibayar kalau statusnya Dibayar / Dikirim / Selesai.
@@ -148,6 +173,7 @@ export default function ProfileDashboard() {
   const [payOrder, setPayOrder] = useState(null);
   const [payLeft, setPayLeft] = useState(0);
   const [payBusy, setPayBusy] = useState(false);
+  const [admRange, setAdmRange] = useState("7h");
 
   useEffect(() => {
     const h = () => setTick((t) => t + 1);
@@ -306,23 +332,72 @@ export default function ProfileDashboard() {
       },
     ];
 
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      const start = d.getTime();
-      const end = start + 86400000;
+    // Satu batang = satu potongan waktu, tergantung rentang yang dipilih.
+    const bucket = (label, start, end) => {
       const isi = paid.filter((o) => o.ts >= start && o.ts < end);
-      days.push({
-        label: HARI[d.getDay()],
+      return {
+        label,
         n: isi.length,
         sum: isi.reduce((s, o) => s + (Number(o.total) || 0), 0),
+      };
+    };
+
+    let buckets = [];
+    if (admRange === "hari") {
+      const d0 = new Date();
+      d0.setHours(0, 0, 0, 0);
+      for (let h = 0; h < 24; h += 4) {
+        const st = d0.getTime() + h * 3600000;
+        buckets.push(
+          bucket((h < 10 ? "0" : "") + h + ":00", st, st + 4 * 3600000),
+        );
+      }
+    } else if (admRange === "all") {
+      let first = 0;
+      paid.forEach((o) => {
+        if (o.ts && (!first || o.ts < first)) first = o.ts;
       });
+      const cur = new Date(first || Date.now());
+      cur.setDate(1);
+      cur.setHours(0, 0, 0, 0);
+      const now = Date.now();
+      while (cur.getTime() <= now && buckets.length < 18) {
+        const st = new Date(cur.getFullYear(), cur.getMonth(), 1).getTime();
+        const en = new Date(cur.getFullYear(), cur.getMonth() + 1, 1).getTime();
+        buckets.push(bucket(BULAN[cur.getMonth()], st, en));
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      if (!buckets.length) buckets.push(bucket("-", 0, Date.now() + 1));
+    } else {
+      const n =
+        admRange === "3h"
+          ? 3
+          : admRange === "14h"
+            ? 14
+            : admRange === "30h"
+              ? 30
+              : 7;
+      const step = n > 14 ? 5 : 1;
+      for (let i = n - step; i >= 0; i -= step) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i - (step - 1));
+        const st = d.getTime();
+        const label =
+          step === 1 && n <= 7
+            ? HARI[d.getDay()]
+            : d.getDate() + "/" + (d.getMonth() + 1);
+        buckets.push(bucket(label, st, st + step * 86400000));
+      }
     }
+
     let maxSum = 1;
-    days.forEach((d) => {
+    let rangeSum = 0;
+    let rangeN = 0;
+    buckets.forEach((d) => {
       if (d.sum > maxSum) maxSum = d.sum;
+      rangeSum += d.sum;
+      rangeN += d.n;
     });
 
     const map = {};
@@ -356,8 +431,10 @@ export default function ProfileDashboard() {
       sold,
       avg,
       statusList,
-      days,
+      buckets,
       maxSum,
+      rangeSum,
+      rangeN,
       top,
       latest,
     };
@@ -767,9 +844,29 @@ export default function ProfileDashboard() {
 
                   <div className="adm-grid">
                     <div className="adm-card">
-                      <h4>Traffic penjualan (7 hari)</h4>
+                      <div className="adm-card-head">
+                        <h4>Traffic penjualan</h4>
+                        <div className="adm-range">
+                          {RANGES.map((r) => (
+                            <button
+                              key={r.id}
+                              className={
+                                "adm-range-btn" +
+                                (admRange === r.id ? " on" : "")
+                              }
+                              onClick={() => setAdmRange(r.id)}
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="adm-range-sum">
+                        {money(adminStat.rangeSum)}{" "}
+                        <span>dari {adminStat.rangeN} pesanan</span>
+                      </p>
                       <div className="adm-chart">
-                        {adminStat.days.map((d, i) => (
+                        {adminStat.buckets.map((d, i) => (
                           <div className="adm-bar-wrap" key={i}>
                             <span className="adm-bar-n">{d.n}</span>
                             <div
@@ -789,7 +886,7 @@ export default function ProfileDashboard() {
                       </div>
                       <p className="adm-note">
                         Tinggi batang = pendapatan, angka di atas = jumlah
-                        pesanan hari itu.
+                        pesanan di periode itu.
                       </p>
                     </div>
 

@@ -6644,3 +6644,52 @@ footer {
     font-size: 22px;
   }
 }
+
+/* ====== FILTER RENTANG WAKTU GRAFIK PENJUALAN ====== */
+.adm-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.adm-card-head h4 {
+  margin: 0;
+}
+.adm-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adm-range-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.adm-range-btn:hover {
+  border-color: var(--green);
+  color: var(--green-deep);
+}
+.adm-range-btn.on {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+  color: #fff;
+}
+.adm-range-sum {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--green-deep);
+}
+.adm-range-sum span {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
