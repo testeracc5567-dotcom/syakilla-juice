@@ -3,7 +3,12 @@ import { useState, useEffect } from "react";
 import { useUI } from "@/context/UIContext";
 import { useStore } from "@/context/StoreContext";
 import { useAuth } from "@/context/AuthContext";
-import { getReviews, addReview, getRating, hasReviewed } from "@/lib/reviews";
+import {
+  getReviews,
+  addReview,
+  getRating,
+  pendingReviewOrderId,
+} from "@/lib/reviews";
 import { getPurchasedProductIds, getSoldCount } from "@/lib/orders";
 import { money } from "@/lib/format";
 import { Icon } from "./Icons";
@@ -64,9 +69,7 @@ export default function ProductModal() {
     let canRate = false;
     if (pid && uemail) {
       try {
-        canRate =
-          getPurchasedProductIds(uemail).has(pid) &&
-          !hasReviewed(pid, uemail);
+        canRate = !!pendingReviewOrderId(pid, uemail);
       } catch (e) {
         canRate = false;
       }
@@ -86,8 +89,10 @@ export default function ProductModal() {
   const sold = getSoldCount(p.id);
   const displayAvg = rating.count ? rating.avg : p.stars;
   const purchased = user ? getPurchasedProductIds(user.email) : new Set();
-  const eligible = !!user && purchased.has(p.id);
-  const already = !!user && hasReviewed(p.id, user.email);
+  // 1 ulasan per PESANAN: beli produk sama 2x, dua-duanya bisa diulas.
+  const rateOrderId = user ? pendingReviewOrderId(p.id, user.email) : "";
+  const eligible = !!user && !!rateOrderId;
+  const already = !!user && !rateOrderId && purchased.has(p.id);
   const stock = Number(p.stock || 0);
   const out = stock <= 0;
 
@@ -103,6 +108,7 @@ export default function ProductModal() {
       email: user.email,
       stars,
       text: t,
+      orderId: rateOrderId,
       ts: Date.now(),
     });
     setSending(false);

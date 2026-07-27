@@ -1,5 +1,6 @@
-﻿// API ulasan produk (server, Firestore) biar rating kelihatan di semua HP/browser.
-// Doc id = productId + "__" + email, jadi 1 orang cuma bisa 1 ulasan per produk.
+// API ulasan produk (server, Firestore) biar rating kelihatan di semua HP/browser.
+// Doc id = productId + "__" + email + "__" + orderId, jadi 1 ulasan per PESANAN.
+// Beli produk yang sama 2x = dua-duanya bisa diulas.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -10,13 +11,15 @@ export const dynamic = "force-dynamic";
 
 const COL = "reviews";
 
-function safeId(productId, email) {
+function safeId(productId, email, orderId) {
   return (
     String(productId).replace(/[^a-zA-Z0-9_-]/g, "_") +
     "__" +
     String(email)
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9]/g, "_")
+      .replace(/[^a-zA-Z0-9]/g, "_") +
+    "__" +
+    String(orderId || "lama").replace(/[^a-zA-Z0-9_-]/g, "_")
   );
 }
 
@@ -38,6 +41,7 @@ export async function GET() {
         stars: Number(v.stars) || 0,
         text: v.text || "",
         ts: Number(v.ts) || 0,
+        orderId: v.orderId || "",
       });
     });
     Object.keys(data).forEach((k) => {
@@ -70,6 +74,7 @@ export async function POST(req) {
     const productId = String(body.productId || "").trim();
     const stars = Math.min(5, Math.max(1, Number(body.stars) || 0));
     const text = String(body.text || "").trim().slice(0, 1000);
+    const orderId = String(body.orderId || "").trim();
     if (!productId || !stars || !text) {
       return NextResponse.json({ error: "Data ulasan kurang." }, {
         status: 400,
@@ -78,20 +83,34 @@ export async function POST(req) {
 
     const adb = getAdminDb();
 
-    // Cek pembeli beneran pernah beli produk ini.
-    const orders = await adb
-      .collection("orders")
-      .where("roomId", "==", email)
-      .get();
+    // Cek pembeli beneran pernah beli produk ini (dicek per pesanan).
     let bought = false;
-    orders.docs.forEach((d) => {
-      const o = (d.data() || {}).order || {};
-      const st = String(o.status || "").toLowerCase();
-      if (st.includes("batal")) return;
-      (o.items || []).forEach((it) => {
-        if (String(it.id) === productId) bought = true;
+    if (orderId) {
+      const od = await adb.collection("orders").doc(orderId).get();
+      if (od.exists) {
+        const v = od.data() || {};
+        const o = v.order || {};
+        const st = String(o.status || "").toLowerCase();
+        if (String(v.roomId || "") === email && !st.includes("batal")) {
+          bought = (o.items || []).some(
+            (it) => String(it.id) === productId,
+          );
+        }
+      }
+    } else {
+      const orders = await adb
+        .collection("orders")
+        .where("roomId", "==", email)
+        .get();
+      orders.docs.forEach((d) => {
+        const o = (d.data() || {}).order || {};
+        const st = String(o.status || "").toLowerCase();
+        if (st.includes("batal")) return;
+        (o.items || []).forEach((it) => {
+          if (String(it.id) === productId) bought = true;
+        });
       });
-    });
+    }
     if (!bought) {
       return NextResponse.json(
         { error: "Ulasan cuma buat produk yang pernah kamu beli." },
@@ -99,12 +118,12 @@ export async function POST(req) {
       );
     }
 
-    const id = safeId(productId, email);
+    const id = safeId(productId, email, orderId);
     const ref = adb.collection(COL).doc(id);
     const existing = await ref.get();
     if (existing.exists) {
       return NextResponse.json(
-        { error: "Kamu sudah pernah kasih ulasan buat produk ini." },
+        { error: "Pesanan ini udah kamu ulas." },
         { status: 409 },
       );
     }
@@ -115,6 +134,7 @@ export async function POST(req) {
       name: nama,
       stars,
       text,
+      orderId,
       ts: Date.now(),
     });
     return NextResponse.json({ ok: true, id });

@@ -11,7 +11,7 @@ import {
   isOrderCancelled,
   updateOrderStatus,
 } from "@/lib/orders";
-import { getReviewCountByEmail, hasReviewed } from "@/lib/reviews";
+import { getReviewCountByEmail, hasReviewedOrder } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
 import { loadSnap } from "@/lib/snap";
@@ -228,7 +228,9 @@ export default function ProfileDashboard() {
   const unreviewedItem = (o) => {
     const mail = user && user.email ? user.email : "";
     if (!mail) return null;
-    return (o.items || []).find((it) => !hasReviewed(it.id, mail)) || null;
+    return (
+      (o.items || []).find((it) => !hasReviewedOrder(it.id, mail, o.id)) || null
+    );
   };
 
   // Buka detail produk buat kasih rating setelah pesanan selesai.
