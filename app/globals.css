@@ -6693,3 +6693,61 @@ footer {
   font-weight: 600;
   color: var(--muted);
 }
+
+/* ====== HALAMAN LEVEL MEMBER (LIHAT LEVEL LAINNYA) ====== */
+.lvl-title { margin: 0 0 20px; }
+.lvl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+  gap: 18px;
+}
+.lvl-card {
+  background: #faf7f0;
+  border: 1px solid #ece4d6;
+  border-radius: 16px;
+  padding: 22px 20px;
+}
+.lvl-card.on {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(244, 168, 37, 0.22);
+}
+.lvl-medal {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ece4d6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7a5c2e;
+  margin-bottom: 14px;
+}
+.lvl-card h4 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  color: #3a2c17;
+}
+.lvl-benefit-lbl {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #3a2c17;
+}
+.lvl-list { margin: 0; padding-left: 18px; }
+.lvl-list li {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #6b5b45;
+  margin-bottom: 7px;
+}
+.lvl-back-wrap { display: flex; justify-content: center; margin-top: 28px; }
+.lvl-back {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 11px 36px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lvl-back:hover { background: #f5f5f5; }

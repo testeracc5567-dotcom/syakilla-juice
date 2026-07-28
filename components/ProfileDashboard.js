@@ -67,6 +67,33 @@ const BULAN = [
   "Des",
 ];
 
+// Daftar level member + benefitnya (halaman "Lihat Level Lainnya").
+const TIER_INFO = [
+  {
+    name: "Bronze",
+    perks: [
+      "Mendapatkan 1 voucher diskon 12% jika belanja 10x dalam waktu sebulan.",
+      "Bonus poin kelipatan 10%",
+    ],
+  },
+  {
+    name: "Silver",
+    perks: [
+      "Mendapatkan 2 voucher diskon 20% jika belanja 20x dalam waktu sebulan.",
+      "Bonus poin kelipatan level member +20%",
+      "Dapatkan Promo Spesial tiap bulannya",
+    ],
+  },
+  {
+    name: "Gold",
+    perks: [
+      "Mendapatkan 3 voucher diskon 35% jika belanja 30x dalam waktu sebulan.",
+      "Bonus poin kelipatan level member +30%",
+      "Dapatkan Promo Spesial tiap minggunya",
+      "Spesial diskon ulang tahun",
+    ],
+  },
+];
 const STEPS = ["Dibayar", "Diproses", "Dikirim", "Selesai"];
 
 // Pesanan dianggap dibayar kalau statusnya Dibayar / Dikirim / Selesai.
@@ -776,7 +803,7 @@ export default function ProfileDashboard() {
                       )}
                       <button
                         className="dash-level-link"
-                        onClick={() => go("loyalty")}
+                        onClick={() => go("level")}
                       >
                         Lihat Level Lainnya
                       </button>
@@ -1209,6 +1236,35 @@ export default function ProfileDashboard() {
             </>
           ) : null}
 
+          {section === "level" && !isAdmin ? (
+            <>
+              <h3 className="serif lvl-title">Level Member</h3>
+              <div className="lvl-grid">
+                {TIER_INFO.map((t) => (
+                  <div
+                    key={t.name}
+                    className={"lvl-card" + (tier.name === t.name ? " on" : "")}
+                  >
+                    <span className="lvl-medal">
+                      <Icon name="sparkle" />
+                    </span>
+                    <h4>{t.name} Member</h4>
+                    <div className="lvl-benefit-lbl">Benefit:</div>
+                    <ul className="lvl-list">
+                      {t.perks.map((p) => (
+                        <li key={p}>{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div className="lvl-back-wrap">
+                <button className="lvl-back" onClick={() => go("dashboard")}>
+                  Kembali
+                </button>
+              </div>
+            </>
+          ) : null}
           {section === "loyalty" && !isAdmin ? (
             <>
               <div className="dash-welcome">
