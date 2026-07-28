@@ -8,6 +8,11 @@ import AddressPicker from "./AddressPicker";
 import { money } from "@/lib/format";
 import { SHIPPING_FEE, POINT_VOUCHERS, applyVoucher } from "@/lib/vouchers";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
+import {
+  startVouchersSync,
+  myVouchers,
+  useVoucher as spendVoucher,
+} from "@/lib/myVouchers";
 import { useAuth } from "@/context/AuthContext";
 import {
   getCustomerOrders,
@@ -101,6 +106,16 @@ export default function CheckoutModal() {
   const [payStatus, setPayStatus] = useState("");
   const [payBusy, setPayBusy] = useState(false);
   const [payClicked, setPayClicked] = useState(false);
+  const [claimId, setClaimId] = useState("");
+  const [, setVouTick] = useState(0);
+
+  // Ambil voucher milik pembeli (hasil tukar poin) dari server.
+  useEffect(() => {
+    startVouchersSync(10000);
+    const h = () => setVouTick((n) => n + 1);
+    window.addEventListener("syk-vou-update", h);
+    return () => window.removeEventListener("syk-vou-update", h);
+  }, []);
 
   // Selama nunggu bayar: hitung mundur + pantau status pesanan realtime.
   useEffect(() => {
@@ -153,6 +168,7 @@ export default function CheckoutModal() {
     .reduce((s, o) => s + (o.total || 0), 0);
   const points = Math.floor(doneSpend / 1000);
 
+  const myVou = myVouchers();
   const shipping = delivery === "kirim" ? SHIPPING_FEE : 0;
   const vres = applyVoucher(applied, subtotal, shipping);
   const discount = vres.ok ? vres.discount : 0;
@@ -192,6 +208,23 @@ export default function CheckoutModal() {
     setVErr("");
   };
 
+  // Pilih / batalin voucher milik sendiri.
+  const pickVoucher = (c) => {
+    if (claimId === c.id) {
+      setClaimId("");
+      setApplied("");
+      setVErr("");
+      return;
+    }
+    const r = applyVoucher(c.code, subtotal, shipping);
+    if (!r.ok) {
+      setVErr(r.error || "Voucher belum bisa dipakai.");
+      return;
+    }
+    setClaimId(c.id);
+    setApplied(c.code);
+    setVErr("");
+  };
   const pay = (e) => {
     e.preventDefault();
     if (entries.length === 0) return;
@@ -252,7 +285,11 @@ export default function CheckoutModal() {
           status: method === "cod" ? "Diproses" : "Belum Dibayar",
         },
       });
-      setPayStatus(method === "cod" ? "paid" : "");
+      if (claimId) {
+        spendVoucher(claimId, newId).catch(() => {});
+        setClaimId("");
+        setApplied("");
+      }      setPayStatus(method === "cod" ? "paid" : "");
       setStage(method === "cod" ? "done" : "waiting");
       clear();
     }, 2000);
@@ -749,6 +786,25 @@ export default function CheckoutModal() {
                   </div>
                 )}
 
+                {myVou.length ? (
+                  <div className="co-vou2">
+                    <div className="co-vou2-h">Voucher Kamu</div>
+                    {myVou.map((c) => (
+                      <button
+                        type="button"
+                        key={c.id}
+                        className={
+                          "co-vou2-item" + (claimId === c.id ? " on" : "")
+                        }
+                        onClick={() => pickVoucher(c)}
+                      >
+                        <span>{c.label}</span>
+                        <small>{claimId === c.id ? "Dipakai" : "Pakai"}</small>
+                      </button>
+                    ))}
+                    {vErr ? <p className="co-vou2-err">{vErr}</p> : null}
+                  </div>
+                ) : null}
                 <div className="co-lines">
                   <div className="co-line">
                     <span>Subtotal</span>

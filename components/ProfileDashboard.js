@@ -1358,18 +1358,6 @@ export default function ProfileDashboard() {
                 )
               ) : (
                 <div className="voc-grid">
-                {myVou.length ? (
-                  <div className="voc-mine">
-                    <div className="voc-mine-h">Voucher Saya</div>
-                    {myVou.map((c) => (
-                      <div className="voc-mine-item" key={c.id}>
-                        <Icon name="sparkle" />
-                        <span>{c.label}</span>
-                        <small>siap dipakai</small>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
                   {POINT_VOUCHERS.map((v) => {
                     const cukup = points >= v.cost;
                     return (

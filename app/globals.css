@@ -6834,3 +6834,49 @@ footer {
 .voc-mine-item:first-of-type { border-top: none; }
 .voc-mine-item span { flex: 1; font-weight: 600; }
 .voc-mine-item small { color: var(--muted); font-size: 12px; }
+
+/* ====== PILIH VOUCHER DI CHECKOUT ====== */
+.co-vou2 {
+  background: #f3faf5;
+  border: 1px dashed var(--green);
+  border-radius: 14px;
+  padding: 13px 15px;
+  margin-bottom: 14px;
+}
+.co-vou2-h {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--green-deep);
+  margin-bottom: 9px;
+}
+.co-vou2-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 10px 13px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+}
+.co-vou2-item span { flex: 1; font-weight: 600; color: var(--text); }
+.co-vou2-item small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+}
+.co-vou2-item.on {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(47, 161, 90, 0.18);
+}
+.co-vou2-item.on small { color: var(--green-deep); }
+.co-vou2-err { color: #c0392b; font-size: 12px; margin: 4px 0 0; }
+
+/* ikon di katalog tukar poin jangan kegedean */
+.voc-ico svg,
+.voc-mine-item svg { width: 20px; height: 20px; }
+.voc-ico { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
