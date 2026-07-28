@@ -15,6 +15,12 @@ import { getReviewCountByEmail, hasReviewedOrder } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
 import { POINT_VOUCHERS } from "@/lib/vouchers";
+import {
+  startVouchersSync,
+  getVoucherState,
+  redeemVoucher,
+  myVouchers,
+} from "@/lib/myVouchers";
 import { loadSnap } from "@/lib/snap";
 import { Icon } from "./Icons";
 import KelolaProduk from "./KelolaProduk";
@@ -298,11 +304,36 @@ export default function ProfileDashboard() {
     openProduct(p);
   };
 
+  const [, setVouTick] = useState(0);
+
+  // Sinkron voucher & poin yang udah ditukar (dari server).
+  useEffect(() => {
+    startVouchersSync(10000);
+    const h = () => setVouTick((n) => n + 1);
+    window.addEventListener("syk-vou-update", h);
+    return () => window.removeEventListener("syk-vou-update", h);
+  }, []);
+
+  const tukar = async (v) => {
+    try {
+      await redeemVoucher(v.code);
+      showToast(
+        "Berhasil! " + v.label + " masuk Voucher Saya. Poin -" + v.cost + ".",
+      );
+    } catch (e) {
+      showToast(e.message || "Gagal nukar poin.");
+    }
+  };
   if (!dashboardOpen || !user) return null;
 
   const orders = !isAdmin ? getCustomerOrders(user.email).orders || [] : [];
   const totalSpend = orders.reduce((s, o) => s + (o.total || 0), 0);
-  const points = Math.floor(totalSpend / 1000);
+  const vouState = getVoucherState();
+  const points = Math.max(
+    0,
+    Math.floor(totalSpend / 1000) - (Number(vouState.spent) || 0),
+  );
+  const myVou = myVouchers();
   const reviewCount = getReviewCountByEmail(user.email);
   const incoming = isAdmin ? getAllIncomingOrders() : [];
 
@@ -1326,7 +1357,18 @@ export default function ProfileDashboard() {
                   </div>
                 )
               ) : (
-                <div className="voc-grid">
+                {myVou.length ? (
+                  <div className="voc-mine">
+                    <div className="voc-mine-h">Voucher Saya</div>
+                    {myVou.map((c) => (
+                      <div className="voc-mine-item" key={c.id}>
+                        <Icon name="sparkle" />
+                        <span>{c.label}</span>
+                        <small>siap dipakai</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}                <div className="voc-grid">
                   {POINT_VOUCHERS.map((v) => {
                     const cukup = points >= v.cost;
                     return (
@@ -1347,7 +1389,7 @@ export default function ProfileDashboard() {
                             className="voc-btn"
                             disabled={!cukup}
                             onClick={() =>
-                              showToast("Penukaran poin lagi disiapin, bentar ya!")
+                              tukar(v)
                             }
                           >
                             {cukup ? "Tukar" : "Poin kurang"}

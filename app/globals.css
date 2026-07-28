@@ -6808,3 +6808,29 @@ footer {
   .voc-card { flex-wrap: wrap; }
   .voc-act { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
 }
+
+/* ====== VOUCHER SAYA (HASIL TUKAR POIN) ====== */
+.voc-mine {
+  background: #f3faf5;
+  border: 1px dashed var(--green);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.voc-mine-h {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--green-deep);
+  margin-bottom: 10px;
+}
+.voc-mine-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 0;
+  border-top: 1px solid rgba(47, 161, 90, 0.18);
+  font-size: 14px;
+}
+.voc-mine-item:first-of-type { border-top: none; }
+.voc-mine-item span { flex: 1; font-weight: 600; }
+.voc-mine-item small { color: var(--muted); font-size: 12px; }
