@@ -400,23 +400,7 @@ export default function CheckoutModal() {
               </div>
             ) : (
               <>
-                <button
-                  type="button"
-                  className="co-wait-online"
-                  onClick={payOnline}
-                  disabled={payBusy}
-                >
-                  {payBusy
-                    ? "Membuka pembayaran..."
-                    : "Bayar Online " + money(receipt ? receipt.total : total)}
-                </button>
-                <p className="co-wait-hint">
-                  QRIS, GoPay, ShopeePay, Virtual Account, kartu. Pembayaran
-                  masuk otomatis dan pesanan langsung diproses sistem, tanpa
-                  konfirmasi admin.
-                </p>
-                <div className="co-wait-or">atau bayar manual</div>
-
+                
                 {method === "qris" ? (
                   <div className="co-pay">
                     <div className="co-pay-h">Scan QRIS ini</div>

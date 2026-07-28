@@ -6751,3 +6751,60 @@ footer {
   cursor: pointer;
 }
 .lvl-back:hover { background: #f5f5f5; }
+
+/* ====== KATALOG TUKAR POIN (HADIAH MEMBER) ====== */
+.voc-grid { display: grid; gap: 12px; margin-top: 6px; }
+.voc-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.voc-card.off { opacity: 0.55; }
+.voc-ico {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: #fff6e2;
+  color: #b8860b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voc-txt { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.voc-txt strong { font-size: 15px; }
+.voc-txt small { color: var(--muted); font-size: 12.5px; }
+.voc-act {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+.voc-cost {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b8860b;
+  background: #fff6e2;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.voc-btn {
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.voc-btn:hover { background: var(--green-deep); }
+.voc-btn:disabled { background: #cfd8d2; cursor: not-allowed; }
+@media (max-width: 520px) {
+  .voc-card { flex-wrap: wrap; }
+  .voc-act { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
+}

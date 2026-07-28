@@ -14,6 +14,7 @@ import {
 import { getReviewCountByEmail, hasReviewedOrder } from "@/lib/reviews";
 import { money } from "@/lib/format";
 import { BANKS, EWALLETS, QRIS, isFilled } from "@/lib/payment";
+import { POINT_VOUCHERS } from "@/lib/vouchers";
 import { loadSnap } from "@/lib/snap";
 import { Icon } from "./Icons";
 import KelolaProduk from "./KelolaProduk";
@@ -783,7 +784,7 @@ export default function ProfileDashboard() {
                       <button
                         className="dash-poin-btn"
                         onClick={() =>
-                          showToast("Fitur tukar poin segera hadir!")
+                          go("loyalty")
                         }
                       >
                         <Icon name="sparkle" /> Tukar Poin
@@ -1325,11 +1326,37 @@ export default function ProfileDashboard() {
                   </div>
                 )
               ) : (
-                <div className="dash-history-empty">
-                  Belum ada hadiah yang bisa ditukar saat ini. Kumpulin terus
-                  poinmu ya!
-                </div>
-              )}
+                <div className="voc-grid">
+                  {POINT_VOUCHERS.map((v) => {
+                    const cukup = points >= v.cost;
+                    return (
+                      <div
+                        key={v.code}
+                        className={"voc-card" + (cukup ? "" : " off")}
+                      >
+                        <span className="voc-ico">
+                          <Icon name="sparkle" />
+                        </span>
+                        <div className="voc-txt">
+                          <strong>{v.label}</strong>
+                          <small>{v.desc}</small>
+                        </div>
+                        <div className="voc-act">
+                          <span className="voc-cost">{v.cost} poin</span>
+                          <button
+                            className="voc-btn"
+                            disabled={!cukup}
+                            onClick={() =>
+                              showToast("Penukaran poin lagi disiapin, bentar ya!")
+                            }
+                          >
+                            {cukup ? "Tukar" : "Poin kurang"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>              )}
             </>
           ) : null}
         </div>
