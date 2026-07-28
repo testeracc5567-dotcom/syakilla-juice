@@ -765,57 +765,6 @@ export default function CheckoutModal() {
                   </div>
                 )}
 
-                <div className="co-vou">
-                  <div className="co-vou-h">
-                    <Icon name="sparkle" /> Tukar Poin Jadi Voucher
-                  </div>
-                  <div className="co-poin">
-                    Poin kamu: <strong>{points}</strong> poin
-                  </div>
-
-                  {vErr ? <div className="co-err">{vErr}</div> : null}
-                  {applied && vres.ok ? (
-                    <div className="co-ok">
-                      Voucher <strong>{vres.voucher.label}</strong> kepakai.{" "}
-                      <button
-                        type="button"
-                        className="co-vou-btn ghost"
-                        onClick={clearCode}
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  ) : null}
-
-                  <div className="co-chips">
-                    {POINT_VOUCHERS.map((v) => {
-                      const enough = points >= v.cost;
-                      return (
-                        <button
-                          type="button"
-                          key={v.code}
-                          className={
-                            "co-chip" +
-                            (applied === v.code ? " on" : "") +
-                            (enough ? "" : " off")
-                          }
-                          onClick={() => redeem(v)}
-                          title={
-                            v.desc + (v.min ? ", min. belanja " + money(v.min) : "")
-                          }
-                        >
-                          <strong>{v.label}</strong>
-                          <small>{v.cost} poin</small>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <small className="co-poin-note">
-                    Poin didapat dari pesanan yang udah Selesai. Tiap Rp 1.000 = 1
-                    poin.
-                  </small>
-                </div>
-
                 <div className="co-lines">
                   <div className="co-line">
                     <span>Subtotal</span>
