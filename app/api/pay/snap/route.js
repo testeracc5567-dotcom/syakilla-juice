@@ -1,4 +1,4 @@
-﻿// Bikin token pembayaran Snap buat 1 pesanan.
+// Bikin token pembayaran Snap buat 1 pesanan.
 // Nominal diambil dari Firestore (bukan dari browser) biar gak bisa diakalin.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
@@ -67,6 +67,15 @@ export async function POST(req) {
       );
     }
 
+    // Alamat situs sendiri, buat notification URL + redirect setelah bayar.
+    // Dikirim per transaksi biar gak tergantung setting di dashboard Midtrans.
+    const host = String(req.headers.get("host") || "");
+    const proto = host.startsWith("localhost") ? "http" : "https";
+    const base = String(
+      process.env.NEXTAUTH_URL || (host ? proto + "://" + host : ""),
+    ).replace(/\/+$/, "");
+    const notifUrl = base ? base + "/api/pay/notify" : "";
+
     const cust = data.customer || {};
     const nama = String(cust.name || order.name || "Pembeli").trim();
     const payload = {
@@ -81,15 +90,20 @@ export async function POST(req) {
       },
       expiry: { unit: "minute", duration: 20 },
       credit_card: { secure: true },
+      callbacks: base ? { finish: base, error: base } : undefined,
     };
+
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: authHeader(),
+    };
+    // Midtrans bakal kirim notifikasi ke URL ini, nimpa setting dashboard.
+    if (notifUrl) headers["X-Override-Notification"] = notifUrl;
 
     const res = await fetch(snapApiUrl(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: authHeader(),
-      },
+      headers: headers,
       body: JSON.stringify(payload),
       cache: "no-store",
     });
