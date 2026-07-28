@@ -6880,3 +6880,62 @@ footer {
 .voc-ico svg,
 .voc-mine-item svg { width: 20px; height: 20px; }
 .voc-ico { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+
+/* ====== FIX BANNER BANTUAN KETIBAN HEADER + KONTAK ====== */
+.bantuan {
+  padding: 116px 0 80px;
+}
+.bantuan-hero {
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+.bantuan-sec {
+  scroll-margin-top: 120px;
+}
+@media (max-width: 640px) {
+  .bantuan {
+    padding: 96px 0 64px;
+  }
+}
+.bantuan-contact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.bantuan-contact li {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+.bantuan-contact li svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  color: var(--green);
+  margin-top: 2px;
+}
+.bantuan-contact li strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.bantuan-contact li p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+.bantuan-contact li a {
+  color: var(--green-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+.bantuan-contact li a:hover {
+  text-decoration: underline;
+}

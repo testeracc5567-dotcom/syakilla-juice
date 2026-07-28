@@ -83,7 +83,54 @@ export default function BantuanPage() {
             ))}
           </ul>
         </section>
-      </div>
+
+        <section className="bantuan-sec" id="kontak">
+          <h2 className="serif">Hubungi Kami</h2>
+          <ul className="bantuan-contact">
+            <li>
+              <Icon name="wa" />
+              <div>
+                <strong>WhatsApp / HP</strong>
+                <p>
+                  <a
+                    href="https://wa.me/6285762258302"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    0857-6225-8302
+                  </a>
+                </p>
+              </div>
+            </li>
+            <li>
+              <Icon name="inbox" />
+              <div>
+                <strong>Email Support</strong>
+                <p>
+                  <a href="mailto:syakillajuice123@gmail.com">
+                    syakillajuice123@gmail.com
+                  </a>
+                </p>
+              </div>
+            </li>
+            <li>
+              <Icon name="pin" />
+              <div>
+                <strong>Lokasi Gerai</strong>
+                <p>
+                  Batuphat Timur, Kec. Muara Satu, Kota Lhokseumawe, Aceh.{" "}
+                  <a
+                    href="https://maps.google.com/?q=Batuphat+Timur+Lhokseumawe"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Buka di Google Maps
+                  </a>
+                </p>
+              </div>
+            </li>
+          </ul>
+        </section>      </div>
     </div>
   );
 }
